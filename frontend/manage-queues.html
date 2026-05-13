@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Queue Management | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Queue Management</h2>
+  <div>
+    <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button onclick="back()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</div>
+<div class="queue-container">
+  <h2>Live Patient Queue</h2>
+  <div id="queueTableContainer">
+    <p>Loading queue...</p>
+  </div>
+</div>
+
+<div class="dashboard-container">
+  <div class="card">
+    <h3>Queue Control Panel</h3>
+    <div class="queue-controls">
+      <button class="primary" onclick="callNext()">Call Next Patient</button>
+      <button class="secondary" onclick="skipPatient()">Skip Patient</button>
+      <button class="success" onclick="completePatient()">Mark Complete</button>
+      <select id="transferDoctor" style="padding:8px;min-width:220px;border:1px solid #ccc;border-radius:8px;">
+        <option value="">Transfer to doctor...</option>
+      </select>
+      <button class="secondary" onclick="transferPatient()">Transfer Selected</button>
+    </div>
+    <p id="selectedQueueInfo" style="margin-top:10px;color:#6b7280;font-size:13px;">No patient selected.</p>
+  </div>
+</div>
+
+<script>
+function back() {
+  window.location.href = "admin-dashboard.html";
+}
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+const STATUS_STYLE = {
+  "Waiting":     "background:#fff3cd;color:#856404;",
+  "In Progress": "background:#cce5ff;color:#004085;",
+  "Completed":   "background:#d4edda;color:#155724;",
+  "Cancelled":   "background:#f8d7da;color:#721c24;"
+};
+
+let selectedQueue = null;
+let queueRows = [];
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+
+  return fetch(url, { ...options, headers });
+}
+
+function markSelectionInfo() {
+  const info = document.getElementById("selectedQueueInfo");
+  if (!selectedQueue) {
+    info.textContent = "No patient selected.";
+    return;
+  }
+  info.textContent = `Selected: #${selectedQueue.queue_number} ${selectedQueue.patient_name} (${selectedQueue.status})`;
+}
+
+async function loadDoctorsForTransfer() {
+  try {
+    const res = await fetch("http://localhost:5000/api/doctors");
+    const doctors = await res.json();
+    const select = document.getElementById("transferDoctor");
+    select.innerHTML = '<option value="">Transfer to doctor...</option>';
+    doctors.forEach((doctor) => {
+      const option = document.createElement("option");
+      option.value = doctor.doctorId;
+      option.textContent = doctor.name;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Load doctors for transfer failed:", error);
+  }
+}
+
+function loadQueue() {
+  apiFetch("http://localhost:5000/api/queue")
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data) === false && data?.message) {
+        throw new Error(data.message);
+      }
+      const container = document.getElementById("queueTableContainer");
+      queueRows = data;
+
+      if (data.length === 0) {
+        container.innerHTML = "<p style='color:#888;'>No patients in queue today.</p>";
+        return;
+      }
+
+      let html = `
+        <table class="queue-table" style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:linear-gradient(90deg,#0848a6,#0b5ed7);color:#fff;">
+              <th style="padding:11px 14px;text-align:left;">Queue #</th>
+              <th style="padding:11px 14px;text-align:left;">Patient Name</th>
+              <th style="padding:11px 14px;text-align:left;">IC Number</th>
+              <th style="padding:11px 14px;text-align:left;">Doctor</th>
+              <th style="padding:11px 14px;text-align:left;">Appt. Time</th>
+              <th style="padding:11px 14px;text-align:left;">Est. Wait</th>
+              <th style="padding:11px 14px;text-align:left;">Status</th>
+              <th style="padding:11px 14px;text-align:left;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((patient, i) => {
+        const rowBg = i % 2 === 0 ? "#fff" : "#f8fbff";
+        const st = STATUS_STYLE[patient.status] || "";
+        const waitMin = patient.estimated_waiting_time_minutes != null ? `~${patient.estimated_waiting_time_minutes} min` : "—";
+        const isSelected = selectedQueue && Number(selectedQueue.id) === Number(patient.id);
+        html += `
+          <tr class="${isSelected ? "queue-selected-row" : ""}" style="background:${rowBg};cursor:pointer;" onclick="selectQueueById(${patient.id})">
+            <td style="padding:10px 14px;"><strong>#${patient.queue_number}</strong></td>
+            <td class="${isSelected ? "queue-selected-cell" : ""}" style="padding:10px 14px;font-weight:600;">${patient.patient_name}</td>
+            <td style="padding:10px 14px;">${patient.ic_number}</td>
+            <td style="padding:10px 14px;">Dr. ${patient.doctor_name || 'Not Assigned'}</td>
+            <td style="padding:10px 14px;">${patient.appointment_time}</td>
+            <td style="padding:10px 14px;color:#777;">${waitMin}</td>
+            <td style="padding:10px 14px;"><span style="${st}padding:3px 9px;border-radius:12px;font-size:13px;font-weight:600;">${patient.status}</span></td>
+            <td style="padding:10px 14px;">
+              ${patient.status === 'Waiting' ? `<button class="btn-small" onclick="setStatus(${patient.id}, 'In Progress')">Call</button>` : ''}
+              ${patient.status === 'In Progress' ? `<button class="btn-small" onclick="setStatus(${patient.id}, 'Completed')">Complete</button><button class="btn-small cancel" onclick="setStatus(${patient.id}, 'Waiting')">Skip</button>` : ''}
+              ${patient.status === 'Waiting' ? `<button class="btn-small cancel" onclick="setStatus(${patient.id}, 'Cancelled')">Cancel</button>` : ''}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += "</tbody></table>";
+      container.innerHTML = html;
+      markSelectionInfo();
+    })
+    .catch(err => {
+      console.error("Error loading queue:", err);
+      document.getElementById("queueTableContainer").innerHTML = `<p style='color:red;'>${err.message || "Error loading queue. Is the backend running?"}</p>`;
+    });
+}
+
+function selectQueueById(id) {
+  selectedQueue = queueRows.find((row) => Number(row.id) === Number(id)) || null;
+  markSelectionInfo();
+  loadQueue();
+}
+
+async function setStatus(id, status) {
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/queue/${id}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to update status");
+    loadQueue();
+  } catch (err) {
+    alert(err.message || "Failed to update queue status");
+  }
+}
+
+function callNext() {
+  const body = selectedQueue?.doctor_id ? { doctor_id: Number(selectedQueue.doctor_id) } : {};
+  apiFetch("http://localhost:5000/api/queue/next", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  })
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to call next patient");
+      return data;
+    })
+    .then(() => loadQueue())
+    .catch(err => alert(err.message || "Failed to call next patient"));
+}
+
+function skipPatient() {
+  if (!selectedQueue) {
+    alert("Select a patient row first.");
+    return;
+  }
+  apiFetch(`http://localhost:5000/api/queue/${selectedQueue.id}/skip`, {
+    method: "PUT"
+  })
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to skip patient");
+      return data;
+    })
+    .then(() => {
+      selectedQueue = null;
+      loadQueue();
+    })
+    .catch(err => alert(err.message || "Failed to skip patient"));
+}
+
+function completePatient() {
+  if (!selectedQueue) {
+    alert("Select a patient row first.");
+    return;
+  }
+  setStatus(selectedQueue.id, "Completed");
+}
+
+function transferPatient() {
+  if (!selectedQueue) {
+    alert("Select a patient row first.");
+    return;
+  }
+
+  const targetDoctorId = Number(document.getElementById("transferDoctor").value);
+  if (!targetDoctorId) {
+    alert("Select a target doctor first.");
+    return;
+  }
+
+  apiFetch(`http://localhost:5000/api/queue/${selectedQueue.id}/transfer`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target_doctor_id: targetDoctorId })
+  })
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to transfer patient");
+      return data;
+    })
+    .then(() => {
+      selectedQueue = null;
+      loadQueue();
+    })
+    .catch(err => alert(err.message || "Failed to transfer patient"));
+}
+
+// Load queue on page load
+loadQueue();
+loadDoctorsForTransfer();
+
+// Refresh every 5 seconds as fallback for reliable live status.
+setInterval(loadQueue, 5000);
+</script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  try {
+    const socket = io("http://localhost:5000");
+    socket.on("queue:updated", loadQueue);
+  } catch(e) { /* polling fallback handles it */ }
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

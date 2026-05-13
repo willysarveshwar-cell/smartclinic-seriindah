@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Admin Dashboard | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <h2>Smart Clinic – Admin</h2>
+  <div>
+    <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="dashboard-container">
+  <h1>Admin Dashboard</h1>
+  <p>System overview and management control</p>
+
+  <!-- Statistics Section -->
+  <div class="stats-section">
+    <div class="stat-card" onclick="toggleDoctorsList()">
+      <h3>Total Doctors</h3>
+      <div class="stat-number" id="totalDoctors">0</div>
+      <p>Click to view list</p>
+    </div>
+
+    <div class="stat-card" onclick="toggleAppointmentsList()">
+      <h3>Today's Appointments</h3>
+      <div class="stat-number" id="todayAppointments">0</div>
+      <p>Click to view list</p>
+    </div>
+
+    <div class="stat-card" onclick="toggleQueueList()">
+      <h3>Patients in Queue</h3>
+      <div class="stat-number" id="queuePatients">0</div>
+      <p>Click to view list</p>
+    </div>
+  </div>
+
+  <!-- Lists Section (Hidden by default) -->
+  <div id="doctorsList" class="list-container" style="display: none;"></div>
+
+  <div id="appointmentsList" class="list-container" style="display: none;">
+    <h3>Today's Appointments</h3>
+    <div id="appointmentsTable"></div>
+  </div>
+
+  <div id="queueList" class="list-container" style="display: none;">
+    <h3>Patients in Queue</h3>
+    <ul id="queueUl"></ul>
+  </div>
+
+  <div id="descriptionsList" class="list-container" style="display: none;"></div>
+
+  <div class="features">
+
+    <div class="card" onclick="location.href='manage-doctors.html'">
+      <h3>Manage Doctors</h3>
+      <p>Add, edit, and remove doctor profiles.</p>
+    </div>
+
+    <div class="card" onclick="location.href='manage-patients.html'">
+      <h3>Manage Patients</h3>
+      <p>Add, update, delete, search, and view patient visit history.</p>
+    </div>
+
+    <div class="card" onclick="location.href='manage-appointments.html'">
+      <h3>Appointments</h3>
+      <p>View and manage all patient appointments.</p>
+    </div>
+
+    <div class="card" onclick="location.href='manage-queues.html'">
+      <h3>Queue Control</h3>
+      <p>Monitor and control live patient queues.</p>
+    </div>
+
+    <div class="card" onclick="location.href='reports.html'">
+      <h3>Reports & Analytics</h3>
+      <p>View clinic performance statistics.</p>
+    </div>
+
+    <div class="card" onclick="toggleDescriptions()">
+      <h3>Patient Descriptions</h3>
+      <p>View and download patient descriptions as PDF.</p>
+    </div>
+
+    <div class="card" onclick="location.href='system-settings.html'">
+      <h3>System Settings</h3>
+      <p>Configure clinic operational settings.</p>
+    </div>
+
+    <div class="card" onclick="location.href='manage-leaves.html'">
+      <h3>Leave Requests</h3>
+      <p>Approve, reject, and review doctor leave requests.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 Smart Clinic System</p>
+</footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+if (localStorage.getItem("adminLoggedIn") !== "true") {
+  window.location.href = "admin.html";
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "admin.html";
+}
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+function goBack() {
+  window.history.back();
+}
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+
+  return fetch(url, { ...options, headers });
+}
+
+// Load dashboard statistics
+function loadStats() {
+  apiFetch("http://localhost:5000/api/admin/stats")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("totalDoctors").textContent = data.totalDoctors;
+      document.getElementById("todayAppointments").textContent = data.todayAppointments;
+      document.getElementById("queuePatients").textContent = data.queuePatients;
+    })
+    .catch(err => console.error("Error loading stats:", err));
+}
+
+// Toggle functions for lists
+function toggleDoctorsList() {
+  const list = document.getElementById("doctorsList");
+  if (list.style.display === "none") {
+    loadDoctorsList();
+    list.style.display = "block";
+  } else {
+    list.style.display = "none";
+  }
+}
+
+function toggleAppointmentsList() {
+  const list = document.getElementById("appointmentsList");
+  if (list.style.display === "none") {
+    loadAppointmentsList();
+    list.style.display = "block";
+  } else {
+    list.style.display = "none";
+  }
+}
+
+function toggleQueueList() {
+  const list = document.getElementById("queueList");
+  if (list.style.display === "none") {
+    loadQueueList();
+    list.style.display = "block";
+  } else {
+    list.style.display = "none";
+  }
+}
+
+function toggleDescriptions() {
+  const list = document.getElementById("descriptionsList");
+  if (list.style.display === "none") {
+    loadDescriptions();
+    list.style.display = "block";
+  } else {
+    list.style.display = "none";
+  }
+}
+
+// Load doctors list
+function loadDoctorsList() {
+  fetch("http://localhost:5000/api/doctors")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("doctorsList");
+      list.innerHTML = "<h3>Doctors List</h3>";
+      if (data.length === 0) {
+        list.innerHTML += "<p>No doctors found</p>";
+      } else {
+        let table = `
+          <table class="doctors-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Specialization</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        data.forEach(doctor => {
+          table += `
+            <tr>
+              <td>${doctor.doctorId}</td>
+              <td>${doctor.name}</td>
+              <td>${doctor.specialization}</td>
+              <td>${doctor.email}</td>
+            </tr>
+          `;
+        });
+        table += "</tbody></table>";
+        list.innerHTML += table;
+      }
+    })
+    .catch(err => console.error("Error loading doctors:", err));
+}
+
+// Load today's appointments
+function loadAppointmentsList() {
+  apiFetch("http://localhost:5000/api/appointments/today")
+    .then(res => res.json())
+    .then(data => {
+      const table = document.getElementById("appointmentsTable");
+      if (data.length === 0) {
+        table.innerHTML = "<p>No appointments for today</p>";
+      } else {
+        const STATUS_STYLE = {
+          "Waiting":     "background:#fff3cd;color:#856404;",
+          "In Progress": "background:#cce5ff;color:#004085;",
+          "Completed":   "background:#d4edda;color:#155724;",
+          "Cancelled":   "background:#f8d7da;color:#721c24;"
+        };
+        let html = `
+          <table class="appointments-table">
+            <thead>
+              <tr>
+                <th>Queue #</th>
+                <th>Patient Name</th>
+                <th>IC Number</th>
+                <th>Doctor</th>
+                <th>Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        data.forEach(apt => {
+          const st = STATUS_STYLE[apt.status] || "";
+          html += `
+            <tr>
+              <td><strong>#${apt.queue_number}</strong></td>
+              <td>${apt.patient_name}</td>
+              <td>${apt.ic_number}</td>
+              <td>Dr. ${apt.doctor_name || "N/A"}</td>
+              <td>${apt.appointment_time}</td>
+              <td><span style="${st}padding:3px 9px;border-radius:12px;font-size:13px;font-weight:600;">${apt.status}</span></td>
+            </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        table.innerHTML = html;
+      }
+    })
+    .catch(err => console.error("Error loading appointments:", err));
+}
+
+// Load queue list
+function loadQueueList() {
+  apiFetch("http://localhost:5000/api/queue")
+    .then(async res => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to load queue");
+      }
+      return data;
+    })
+    .then(data => {
+      const ul = document.getElementById("queueUl");
+      ul.style.listStyle = "none";
+      ul.style.padding = "0";
+      ul.innerHTML = "";
+
+      if (data.length === 0) {
+        ul.innerHTML = "<li>No patients in queue</li>";
+      } else {
+        data.forEach(patient => {
+          const queueNo = patient.queue_number ?? patient.queueNumber ?? "-";
+          const patientName = patient.patient_name || patient.patientName || "Unknown Patient";
+          const icNumber = patient.ic_number || patient.icNumber || "-";
+          const doctorName = patient.doctor_name || patient.doctorName || "Not assigned";
+          const status = patient.status || "-";
+
+          ul.innerHTML += `
+            <li style="padding:10px 0;border-bottom:1px solid #eee;">
+              <strong>#${queueNo}</strong> - <strong>${patientName}</strong> (${icNumber}) - Dr. ${doctorName} - ${status}
+            </li>
+          `;
+        });
+      }
+    })
+    .catch(err => {
+      console.error("Error loading queue:", err);
+      const ul = document.getElementById("queueUl");
+      ul.innerHTML = `<li style="color:#b91c1c;">${err.message || "Error loading queue"}</li>`;
+    });
+}
+
+// Load descriptions
+function loadDescriptions() {
+  apiFetch("http://localhost:5000/api/appointments/today")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("descriptionsList");
+      list.innerHTML = "<h3>Patient Descriptions</h3>";
+      if (data.length === 0) {
+        list.innerHTML += "<p>No appointments today</p>";
+      } else {
+        let table = `
+          <table class="doctors-table">
+            <thead>
+              <tr>
+                <th>Patient Name</th>
+                <th>Doctor</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        data.forEach(apt => {
+          if (apt.description) {
+            table += `
+              <tr>
+                <td>${apt.patient_name}</td>
+                <td>Dr. ${apt.doctor_name || 'Unknown'}</td>
+                <td>${apt.description}</td>
+                <td><button onclick="downloadPDF(${apt.id})">Download PDF</button></td>
+              </tr>
+            `;
+          }
+        });
+        table += "</tbody></table>";
+        list.innerHTML += table;
+      }
+    })
+    .catch(err => console.error("Error loading descriptions:", err));
+}
+
+// Load stats on page load
+loadStats();
+loadQueueList();
+
+// Auto-refresh stats every 30 seconds
+setInterval(loadStats, 30000);
+
+// Real-time updates via Socket.IO
+if (window.io) {
+  const socket = window.io("http://localhost:5000");
+  socket.on("queue:updated", () => {
+    loadStats();
+    loadQueueList();
+    const queueList = document.getElementById("queueList");
+    const aptList = document.getElementById("appointmentsList");
+    if (aptList && aptList.style.display === "block") {
+      loadAppointmentsList();
+    }
+  });
+}
+
+function downloadPDF(appointmentId) {
+  // Fetch appointment details
+  apiFetch(`http://localhost:5000/api/appointments/${appointmentId}`)
+    .then(res => res.json())
+    .then(apt => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(20);
+      doc.text('Patient Description Report', 20, 30);
+
+      doc.setFontSize(12);
+      doc.text(`Patient Name: ${apt.patient_name}`, 20, 50);
+      doc.text(`IC Number: ${apt.ic_number}`, 20, 60);
+      doc.text(`Appointment Date: ${apt.appointment_date}`, 20, 70);
+      doc.text(`Appointment Time: ${apt.appointment_time}`, 20, 80);
+      doc.text(`Queue Number: ${apt.queue_number}`, 20, 90);
+      doc.text(`Status: ${apt.status}`, 20, 100);
+
+      doc.text('Description:', 20, 120);
+      const description = apt.description || 'No description available';
+      const lines = doc.splitTextToSize(description, 170);
+      doc.text(lines, 20, 130);
+
+      doc.save(`patient_description_${apt.patient_name}.pdf`);
+    })
+    .catch(err => console.error("Error generating PDF:", err));
+}
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

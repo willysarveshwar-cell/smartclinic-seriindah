@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <title>QR Check-In | Smart Clinic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>Smart Clinic</h2>
+  <nav>
+    <button onclick="window.location.href='index.html'">Home</button>
+    <button onclick="window.history.back()">Back</button>
+    <button onclick="window.location.href='appointment.html'">Book Appointment</button>
+    <button onclick="window.location.href='queue.html'">Queue</button>
+  </nav>
+</header>
+
+<section class="form-container wide">
+  <h2>Patient QR Check-In</h2>
+  <p class="form-hint" style="text-align:center;margin-bottom:16px;">Paste the token from your QR code to confirm attendance.</p>
+
+  <input id="token" placeholder="Enter QR token">
+  <button class="primary" onclick="checkIn()">Continue</button>
+
+  <div id="result" style="margin-top:16px;"></div>
+</section>
+
+<script>
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function checkIn() {
+  const token = document.getElementById("token").value.trim();
+  const result = document.getElementById("result");
+
+  if (!token) {
+    result.innerHTML = '<p class="error-text">Please enter your QR token.</p>';
+    return;
+  }
+
+  result.innerHTML = '<p>Checking in...</p>';
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments/checkin/${encodeURIComponent(token)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Check-in failed");
+    }
+
+    const appt = data.appointment || {};
+    result.innerHTML = `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;">
+        <h3 style="margin:0 0 8px;color:#166534;">Check-in Confirmed</h3>
+        <p style="margin:4px 0;"><strong>Patient:</strong> ${escapeHtml(appt.patient_name)}</p>
+        <p style="margin:4px 0;"><strong>Doctor:</strong> Dr. ${escapeHtml(appt.doctor_name)}</p>
+        <p style="margin:4px 0;"><strong>Date:</strong> ${escapeHtml(appt.appointment_date)} ${escapeHtml(appt.appointment_time)}</p>
+        <p style="margin:4px 0;"><strong>Queue #:</strong> ${escapeHtml(appt.queue_number)}</p>
+        <p style="margin:4px 0;"><strong>Estimated Wait:</strong> ~${escapeHtml(appt.estimated_waiting_time_minutes)} min</p>
+      </div>
+    `;
+  } catch (error) {
+    result.innerHTML = `<p class="error-text">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+(function initFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  if (token) {
+    document.getElementById("token").value = token;
+    checkIn();
+  }
+})();
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+
+</body>
+</html>

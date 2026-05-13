@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <title>Doctor Dashboard | Smart Clinic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+
+<body>
+
+<div class="navbar">
+  <h2 id="doctorName"></h2>
+  <div>
+    <button onclick="goHome()">Home</button>
+    <button onclick="window.location.href='manage-leaves.html'">Leave</button>
+    <button onclick="goBack()">Back</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <button id="btnCallNext" class="btn-success" type="button" onclick="callNextPatient()">Call Next Patient</button>
+    <button id="btnRefresh" class="btn-outline" type="button" onclick="refreshData()">Refresh</button>
+    <span id="refreshState" class="muted-text"></span>
+  </div>
+
+  <h3 class="section-title">Today's Appointments</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Patient Name</th>
+        <th>Time</th>
+        <th>Status</th>
+        <th>Description</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="appointmentsBody"></tbody>
+  </table>
+
+  <h3 class="section-title section-spaced">Current Queue</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Queue No</th>
+        <th>Patient Name</th>
+        <th>Status</th>
+        <th>Description</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="queueBody"></tbody>
+  </table>
+</div>
+
+<!-- Patient Description Section -->
+<div class="container section-spaced">
+  <h3 class="section-title">Patient Description</h3>
+  <div class="panel form-stack">
+    <label for="patientSelect">Select patient</label>
+    <select id="patientSelect" onchange="loadPatientDescription()">
+      <option value="">— Select a patient —</option>
+    </select>
+    <label for="descriptionTextarea">Visit description</label>
+    <textarea id="descriptionTextarea" rows="4" placeholder="Clinical notes for this visit…"></textarea>
+    <button type="button" class="btn-success" onclick="savePatientDescription()">Save description</button>
+
+    <hr>
+    <h4 class="section-title" style="margin-bottom:12px;">Medical record</h4>
+    <label for="diagnosisInput">Diagnosis</label>
+    <textarea id="diagnosisInput" rows="3" placeholder="Diagnosis…"></textarea>
+    <label for="prescriptionInput">Prescriptions</label>
+    <textarea id="prescriptionInput" rows="3" placeholder="Prescriptions…"></textarea>
+    <label for="notesInput">Clinical notes</label>
+    <textarea id="notesInput" rows="3" placeholder="Additional notes…"></textarea>
+    <button type="button" class="primary" style="width:auto;margin-top:12px;" onclick="saveMedicalRecord()">Save medical record</button>
+  </div>
+</div>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const doctor = JSON.parse(localStorage.getItem("doctor"));
+const activeDoctorId = doctor?.doctorId || doctor?.id;
+
+if (!doctor) {
+  window.location.href = "doctor-login.html";
+}
+
+if (!activeDoctorId) {
+  alert("Doctor profile is incomplete. Please login again.");
+  localStorage.removeItem("doctor");
+  localStorage.removeItem("doctorToken");
+  window.location.href = "doctor-login.html";
+}
+
+document.getElementById("doctorName").innerText =
+  `Dr. ${doctor.name} (${doctor.specialization})`;
+
+const appointmentMeta = new Map();
+
+function getDoctorToken() {
+  return localStorage.getItem("doctorToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getDoctorToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+
+  return fetch(url, { ...options, headers });
+}
+
+async function updateStatus(appointmentId, status) {
+  const res = await apiFetch(`http://localhost:5000/api/doctors/appointment/${appointmentId}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to update appointment status");
+  }
+  refreshData();
+}
+
+function loadPatientSelect() {
+  const select = document.getElementById("patientSelect");
+  const previousSelection = select.value;
+  select.innerHTML = '<option value="">-- Select a patient --</option>';
+  appointmentMeta.clear();
+
+  // Load from all today's appointments so completed visits can still be documented.
+  apiFetch(`http://localhost:5000/api/doctors/${activeDoctorId}/appointments/today`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(p => {
+        appointmentMeta.set(String(p.appointmentId), p);
+        const option = document.createElement("option");
+        option.value = p.appointmentId;
+        option.textContent = `${p.appointmentDate || ""} ${p.appointmentTime} - ${p.patientName} (${p.status})`;
+        if (String(p.appointmentId) === previousSelection) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+      if (previousSelection && select.value === "" && [...select.options].some(opt => opt.value === previousSelection)) {
+        select.value = previousSelection;
+      }
+    })
+    .catch(err => console.error("Error loading patients:", err));
+}
+
+function loadPatientDescription() {
+  const appointmentId = document.getElementById("patientSelect").value;
+  const textarea = document.getElementById("descriptionTextarea");
+  const diagnosisInput = document.getElementById("diagnosisInput");
+  const prescriptionInput = document.getElementById("prescriptionInput");
+  const notesInput = document.getElementById("notesInput");
+
+  if (!appointmentId) {
+    textarea.value = "";
+    diagnosisInput.value = "";
+    prescriptionInput.value = "";
+    notesInput.value = "";
+    return;
+  }
+
+  apiFetch(`http://localhost:5000/api/doctors/appointment/${appointmentId}`)
+    .then(res => res.json())
+    .then(data => {
+      textarea.value = data.description || "";
+      return apiFetch(`http://localhost:5000/api/doctors/${activeDoctorId}/medical-records?appointment_id=${appointmentId}`);
+    })
+    .then(res => res.json())
+    .then(records => {
+      const record = Array.isArray(records) && records.length > 0 ? records[0] : null;
+      diagnosisInput.value = record?.diagnosis || "";
+      prescriptionInput.value = record?.prescriptions || "";
+      notesInput.value = record?.notes || "";
+    })
+    .catch(err => {
+      console.error("Error loading patient details:", err);
+      textarea.value = "";
+      diagnosisInput.value = "";
+      prescriptionInput.value = "";
+      notesInput.value = "";
+    });
+}
+
+async function loadAppointments() {
+  const res = await apiFetch(
+    `http://localhost:5000/api/doctors/${activeDoctorId}/appointments/today`
+  );
+
+  const data = await res.json();
+  const tbody = document.getElementById("appointmentsBody");
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5">No appointments today</td></tr>`;
+    return;
+  }
+
+  data.forEach(a => {
+    const scheduleText = `${a.appointmentDate || ""} ${a.appointmentTime}`.trim();
+    const actions = a.status === 'Waiting' ?
+      `<button type="button" onclick="updateStatus(${a.appointmentId}, 'In Progress')">Start</button>
+       <button type="button" onclick="updateStatus(${a.appointmentId}, 'Completed')">Complete</button>` :
+      a.status === 'In Progress' ?
+      `<button type="button" onclick="updateStatus(${a.appointmentId}, 'Completed')">Complete</button>` :
+      'Done';
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${a.patientName}</td>
+        <td>${scheduleText}</td>
+        <td>${a.status}</td>
+        <td>${a.description || ''}</td>
+        <td>${actions}</td>
+      </tr>
+    `;
+  });
+}
+
+async function loadQueue() {
+  const res = await apiFetch(
+    `http://localhost:5000/api/doctors/${activeDoctorId}/queue`
+  );
+
+  const data = await res.json();
+  const tbody = document.getElementById("queueBody");
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5">No patients in queue</td></tr>`;
+    return;
+  }
+
+  data.forEach(p => {
+    const actions = p.status === 'Waiting' ?
+      `<button type="button" onclick="updateStatus(${p.appointmentId}, 'In Progress')">Call</button>` :
+      p.status === 'In Progress' ?
+      `<button type="button" onclick="updateStatus(${p.appointmentId}, 'Completed')">Complete</button>` :
+      'Done';
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${p.queueNumber}</td>
+        <td>${p.patientName}</td>
+        <td>${p.status}</td>
+        <td>${p.description || ''}</td>
+        <td>${actions}</td>
+      </tr>
+    `;
+  });
+}
+
+async function callNextPatient() {
+  try {
+    document.getElementById("btnCallNext").disabled = true;
+    const res = await apiFetch("http://localhost:5000/api/queue/next", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doctor_id: activeDoctorId })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Failed to call next patient");
+      return;
+    }
+
+    await refreshData();
+  } catch (error) {
+    alert(error.message || "Failed to call next patient");
+  } finally {
+    document.getElementById("btnCallNext").disabled = false;
+  }
+}
+
+async function refreshData() {
+  const btn = document.getElementById("btnRefresh");
+  const state = document.getElementById("refreshState");
+
+  btn.disabled = true;
+  state.textContent = "Refreshing...";
+
+  try {
+    await Promise.all([loadAppointments(), loadQueue(), loadPatientSelect()]);
+    state.textContent = `Updated at ${new Date().toLocaleTimeString()}`;
+  } catch (error) {
+    console.error("Refresh error:", error);
+    state.textContent = "Refresh failed";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function logout() {
+  localStorage.removeItem("doctor");
+  localStorage.removeItem("doctorToken");
+  window.location.href = "doctor-login.html";
+}
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+function goBack() {
+  window.history.back();
+}
+
+async function savePatientDescription() {
+  const appointmentId = document.getElementById("patientSelect").value;
+  const description = document.getElementById("descriptionTextarea").value;
+
+  if (!appointmentId) {
+    alert("Please select a patient");
+    return;
+  }
+
+  const res = await apiFetch(`http://localhost:5000/api/appointments/${appointmentId}/description`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ description })
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    alert(data.message || "Failed to save description");
+    return;
+  }
+
+  alert("Description saved successfully");
+  loadPatientDescription();
+}
+
+async function saveMedicalRecord() {
+  const appointmentId = document.getElementById("patientSelect").value;
+  if (!appointmentId) {
+    alert("Please select a patient appointment");
+    return;
+  }
+
+  const meta = appointmentMeta.get(String(appointmentId));
+  if (!meta) {
+    alert("Appointment data not loaded yet. Please refresh.");
+    return;
+  }
+
+  const payload = {
+    doctor_id: activeDoctorId,
+    patient_id: meta.patientId || null,
+    appointment_id: Number(appointmentId),
+    diagnosis: document.getElementById("diagnosisInput").value.trim(),
+    prescriptions: document.getElementById("prescriptionInput").value.trim(),
+    notes: document.getElementById("notesInput").value.trim(),
+    visit_date: new Date().toISOString().split("T")[0]
+  };
+
+  const res = await apiFetch("http://localhost:5000/api/doctors/medical-records", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.message || "Failed to save medical record");
+    return;
+  }
+
+  alert("Medical record saved successfully");
+
+  // Also update the appointment description with the notes
+  const description = payload.notes;
+  if (description) {
+    const descRes = await apiFetch(`http://localhost:5000/api/appointments/${appointmentId}/description`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description })
+    });
+    if (!descRes.ok) {
+      console.error("Failed to update description");
+    }
+  }
+
+  loadPatientDescription();
+}
+
+refreshData();
+
+if (window.io) {
+  const socket = window.io("http://localhost:5000");
+  socket.on("queue:updated", () => {
+    loadAppointments();
+    loadQueue();
+    loadPatientSelect();
+  });
+}
+
+setInterval(() => {
+  refreshData();
+}, 5000);
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

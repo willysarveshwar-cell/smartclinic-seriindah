@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Manage Doctors | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Doctor Management</h2>
+  <div>
+    <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</div>
+
+<div class="form-container">
+  <h2>Add Doctor</h2>
+  <input id="name" placeholder="Doctor Name">
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <input id="spec" placeholder="Specialization">
+  <button class="primary" onclick="addDoctor()">Add Doctor</button>
+</div>
+
+<div class="dashboard-container">
+  <h2>Doctors List</h2>
+  <div class="search-row">
+    <input id="doctorSearch" placeholder="Search doctor by name, specialization, or email" />
+    <button class="primary" onclick="loadDoctors()">Search</button>
+  </div>
+  <div id="doctorList"></div>
+</div>
+
+<script>
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function authHeaders(contentType = "application/json") {
+  const headers = {};
+  const token = getAdminToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (contentType) {
+    headers["Content-Type"] = contentType;
+  }
+  return headers;
+}
+
+function requireAdminLogin() {
+  if (!getAdminToken()) {
+    alert("Admin login required. Redirecting to the admin login page.");
+    window.location.href = "admin.html";
+    return false;
+  }
+  return true;
+}
+
+function loadDoctors() {
+  if (!requireAdminLogin()) return;
+  const doctorSearchInput = document.getElementById("doctorSearch");
+  const searchText = doctorSearchInput ? doctorSearchInput.value.trim() : "";
+  const query = searchText ? `?search=${encodeURIComponent(searchText)}` : "";
+
+  fetch(`http://localhost:5000/api/doctors${query}`, {
+    headers: authHeaders("application/json")
+  })
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("doctorList");
+      list.innerHTML = "";
+      if (data.length === 0) {
+        list.innerHTML = "<p>No doctors added yet</p>";
+      } else {
+        let table = `
+          <table class="doctors-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Specialization</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        data.forEach(d => {
+          table += `
+            <tr>
+              <td>${d.doctorId}</td>
+              <td>${d.name}</td>
+              <td>${d.specialization}</td>
+              <td>${d.email}</td>
+              <td>
+                <button onclick="editDoctor(${d.doctorId})">Edit</button>
+                <button onclick="deleteDoctor(${d.doctorId})">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+        table += "</tbody></table>";
+        list.innerHTML = table;
+      }
+    })
+    .catch(err => {
+      console.error("Error loading doctors:", err);
+      list.innerHTML = "<p>Error loading doctors</p>";
+    });
+}
+
+function addDoctor() {
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const spec = document.getElementById("spec").value;
+
+  if (!name || !email || !password || !spec) {
+    alert("Please fill in all fields");
+    return;
+  }
+
+  if (!requireAdminLogin()) return;
+
+  fetch("http://localhost:5000/api/doctors", {
+    method: "POST",
+    headers: authHeaders("application/json"),
+    body: JSON.stringify({
+      name: name,
+      email: email,
+      password: password,
+      specialization: spec
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.message) {
+      alert("Doctor added successfully! ✅");
+      document.getElementById("name").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("spec").value = "";
+      loadDoctors();
+    } else {
+      alert("Error adding doctor");
+    }
+  })
+  .catch(err => {
+    console.error("Error:", err);
+    alert("Server error");
+  });
+}
+
+function editDoctor(id) {
+  // Simple prompt for edit
+  const newName = prompt("Enter new name:");
+  const newSpec = prompt("Enter new specialization:");
+  const newEmail = prompt("Enter new email:");
+
+  if (newName && newSpec && newEmail) {
+    fetch(`http://localhost:5000/api/doctors/${id}`, {
+      method: "PUT",
+      headers: authHeaders("application/json"),
+      body: JSON.stringify({ name: newName, specialization: newSpec, email: newEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.message) {
+        alert("Doctor updated successfully!");
+        loadDoctors();
+      } else {
+        alert("Error updating doctor");
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Server error");
+    });
+  }
+}
+
+function deleteDoctor(id) {
+  if (confirm("Are you sure you want to delete this doctor?")) {
+    fetch(`http://localhost:5000/api/doctors/${id}`, {
+      method: "DELETE",
+      headers: authHeaders("application/json")
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.message) {
+        alert("Doctor deleted successfully!");
+        loadDoctors();
+      } else {
+        alert("Error deleting doctor");
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Server error");
+    });
+  }
+}
+
+loadDoctors();
+</script>
+
+<script src="script.js"></script>
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

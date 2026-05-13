@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Manage Appointments | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Appointments</h2>
+  <div>
+    <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button onclick="back()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+  <h2>Appointments</h2>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 14px; align-items:center;">
+    <input id="filterPatient" placeholder="Search patient name" style="padding:8px; min-width: 220px;">
+    <input id="filterDate" type="date" style="padding:8px;">
+    <select id="filterStatus" style="padding:8px; min-width: 170px;">
+      <option value="">All Status</option>
+      <option value="Waiting">Waiting</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+    <button class="primary" onclick="loadAppointments()" style="width:auto;">Apply Filter</button>
+    <button onclick="clearFilter()" style="width:auto;padding:9px 16px;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer;">Clear</button>
+  </div>
+  <div id="appointmentsContainer">
+    <p>Loading appointments...</p>
+  </div>
+</div>
+
+<div id="editModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 style="margin-top:0;">Edit Appointment</h3>
+    <input id="editAppointmentId" type="hidden">
+    <label>Patient Name</label>
+    <input id="editPatientName" placeholder="Patient Name">
+    <label>IC Number</label>
+    <input id="editIcNumber" placeholder="IC Number">
+    <label>Doctor</label>
+    <select id="editDoctor"></select>
+    <label>Date</label>
+    <input id="editDate" type="date">
+    <label>Time</label>
+    <input id="editTime" type="time">
+    <label>Status</label>
+    <select id="editStatus">
+      <option value="Waiting">Waiting</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Completed">Completed</option>
+      <option value="Cancelled">Cancelled</option>
+    </select>
+    <label>Description</label>
+    <input id="editDescription" placeholder="Description">
+    <p id="editError" style="color:#c62828;font-size:13px;"></p>
+    <div class="modal-actions">
+      <button class="primary" onclick="saveAppointment()" style="width:auto;">Save</button>
+      <button onclick="closeEditModal()" style="width:auto;padding:9px 16px;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function back() {
+  window.location.href = "admin-dashboard.html";
+}
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+function clearFilter() {
+  document.getElementById("filterPatient").value = "";
+  document.getElementById("filterDate").value = "";
+  document.getElementById("filterStatus").value = "";
+  loadAppointments();
+}
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+  return fetch(url, { ...options, headers });
+}
+
+async function loadDoctors() {
+  const select = document.getElementById("editDoctor");
+  if (!select) return;
+
+  const res = await fetch("http://localhost:5000/api/doctors");
+  const doctors = await res.json();
+  select.innerHTML = doctors.map((doctor) =>
+    `<option value="${doctor.doctorId}">${doctor.name}</option>`
+  ).join("");
+}
+
+const STATUS_STYLE = {
+  "Waiting":     "background:#fff3cd;color:#856404;",
+  "In Progress": "background:#cce5ff;color:#004085;",
+  "Completed":   "background:#d4edda;color:#155724;",
+  "Cancelled":   "background:#f8d7da;color:#721c24;"
+};
+
+function loadAppointments() {
+  const patient = document.getElementById("filterPatient").value.trim();
+  const status  = document.getElementById("filterStatus").value;
+  const dateEl  = document.getElementById("filterDate");
+  const date    = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().split("T")[0];
+
+  const query = new URLSearchParams({ date });
+  if (patient) query.set("patient_name", patient);
+  if (status)  query.set("status", status);
+
+  apiFetch(`http://localhost:5000/api/appointments?${query.toString()}`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById("appointmentsContainer");
+
+      if (!Array.isArray(data) || data.length === 0) {
+        container.innerHTML = "<p>No appointments found for the selected filter.</p>";
+        return;
+      }
+
+      let html = `
+        <table class="appointments-table" style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:linear-gradient(90deg,#0848a6,#0b5ed7);color:#fff;">
+              <th style="padding:11px 14px;text-align:left;">Queue #</th>
+              <th style="padding:11px 14px;text-align:left;">Patient Name</th>
+              <th style="padding:11px 14px;text-align:left;">IC Number</th>
+              <th style="padding:11px 14px;text-align:left;">Doctor</th>
+              <th style="padding:11px 14px;text-align:left;">Date</th>
+              <th style="padding:11px 14px;text-align:left;">Time</th>
+              <th style="padding:11px 14px;text-align:left;">Status</th>
+              <th style="padding:11px 14px;text-align:left;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      data.forEach((apt, i) => {
+        const rowBg = i % 2 === 0 ? "#fff" : "#f8fbff";
+        const st = STATUS_STYLE[apt.status] || "";
+        html += `
+          <tr style="background:${rowBg};">
+            <td style="padding:10px 14px;"><strong>#${apt.queue_number}</strong></td>
+            <td style="padding:10px 14px;font-weight:600;">${apt.patient_name}</td>
+            <td style="padding:10px 14px;">${apt.ic_number}</td>
+            <td style="padding:10px 14px;">Dr. ${apt.doctor_name || "N/A"}</td>
+            <td style="padding:10px 14px;">${apt.appointment_date}</td>
+            <td style="padding:10px 14px;">${apt.appointment_time}</td>
+            <td style="padding:10px 14px;"><span style="${st}padding:3px 9px;border-radius:12px;font-size:13px;font-weight:600;">${apt.status}</span></td>
+            <td style="padding:10px 14px;">
+              <button class="btn-small" onclick="updateStatus(${apt.id}, 'In Progress')" ${apt.status !== 'Waiting' ? 'disabled style="opacity:0.4;"' : ''}>Start</button>
+              <button class="btn-small" onclick="updateStatus(${apt.id}, 'Completed')" ${apt.status === 'Completed' || apt.status === 'Cancelled' ? 'disabled style="opacity:0.4;"' : ''}>Complete</button>
+              <button class="btn-small cancel" onclick="updateStatus(${apt.id}, 'Cancelled')" ${apt.status === 'Cancelled' || apt.status === 'Completed' ? 'disabled style="opacity:0.4;"' : ''}>Cancel</button>
+              <button class="btn-small" onclick="openEditModal(${apt.id})">Edit</button>
+              <button class="btn-small cancel" onclick="deleteAppointment(${apt.id})">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += "</tbody></table>";
+      container.innerHTML = html;
+    })
+    .catch(err => {
+      console.error("Error loading appointments:", err);
+      document.getElementById("appointmentsContainer").innerHTML = "<p style='color:red;'>Error loading appointments. Is the backend running?</p>";
+    });
+}
+
+async function updateStatus(id, status) {
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/appointments/${id}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to update status");
+
+    loadAppointments();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function openEditModal(id) {
+  const res = await apiFetch(`http://localhost:5000/api/appointments/${id}`);
+  const apt = await res.json();
+  if (!res.ok) {
+    alert(apt.message || "Failed to load appointment");
+    return;
+  }
+
+  document.getElementById("editAppointmentId").value = apt.id;
+  document.getElementById("editPatientName").value = apt.patient_name || "";
+  document.getElementById("editIcNumber").value = apt.ic_number || "";
+  document.getElementById("editDoctor").value = String(apt.doctor_id || "");
+  document.getElementById("editDate").value = apt.appointment_date || "";
+  document.getElementById("editTime").value = String(apt.appointment_time || "").slice(0, 5);
+  document.getElementById("editStatus").value = apt.status || "Waiting";
+  document.getElementById("editDescription").value = apt.description || "";
+  document.getElementById("editError").textContent = "";
+  document.getElementById("editModal").classList.add("open");
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").classList.remove("open");
+}
+
+async function saveAppointment() {
+  const id = document.getElementById("editAppointmentId").value;
+  const body = {
+    patient_name: document.getElementById("editPatientName").value.trim(),
+    ic_number: document.getElementById("editIcNumber").value.trim(),
+    doctor_id: Number(document.getElementById("editDoctor").value),
+    appointment_date: document.getElementById("editDate").value,
+    appointment_time: document.getElementById("editTime").value,
+    status: document.getElementById("editStatus").value,
+    description: document.getElementById("editDescription").value.trim()
+  };
+
+  const res = await apiFetch(`http://localhost:5000/api/appointments/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById("editError").textContent = data.message || "Failed to update appointment";
+    return;
+  }
+
+  closeEditModal();
+  loadAppointments();
+}
+
+async function deleteAppointment(id) {
+  if (!confirm("Delete this appointment permanently?")) return;
+
+  const res = await apiFetch(`http://localhost:5000/api/appointments/${id}`, {
+    method: "DELETE"
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.message || "Failed to delete appointment");
+    return;
+  }
+  loadAppointments();
+}
+
+// Set today as default date filter
+document.addEventListener("DOMContentLoaded", () => {
+  if (!localStorage.getItem("adminToken")) {
+    window.location.href = "admin.html";
+    return;
+  }
+  const dateEl = document.getElementById("filterDate");
+  if (dateEl) dateEl.value = new Date().toISOString().split("T")[0];
+  loadDoctors();
+  loadAppointments();
+});
+
+document.getElementById("editModal").addEventListener("click", (event) => {
+  if (event.target.id === "editModal") closeEditModal();
+});
+</script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  try {
+    const socket = io("http://localhost:5000");
+    socket.on("queue:updated", loadAppointments);
+  } catch(e) {
+    setInterval(loadAppointments, 15000);
+  }
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Leave Management | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+  <style>
+    body {
+      background: #f4f7fb;
+    }
+
+    .page-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0a58ca, #0f766e);
+      color: #fff;
+      padding: 24px;
+      border-radius: 18px;
+      margin-bottom: 24px;
+      box-shadow: 0 16px 40px rgba(10, 88, 202, 0.18);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .hero p {
+      margin: 0;
+      opacity: 0.92;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .panel h2 {
+      margin-top: 0;
+    }
+
+    .filter-row,
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 11px 12px;
+      border: 1px solid #cfd8e3;
+      border-radius: 10px;
+      font: inherit;
+    }
+
+    .form-group textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pill-pending {
+      background: #fff3cd;
+      color: #8a6d1d;
+    }
+
+    .pill-approved {
+      background: #d1e7dd;
+      color: #146c43;
+    }
+
+    .pill-rejected {
+      background: #f8d7da;
+      color: #b02a37;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e8edf4;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #425466;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .empty-state {
+      padding: 20px;
+      text-align: center;
+      color: #6b7280;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+    }
+
+    #statusMessage {
+      margin-top: 12px;
+      min-height: 20px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-row,
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h2>Smart Clinic - Leave Management</h2>
+    <div>
+      <button onclick="goHome()">Home</button>
+      <button onclick="goBack()">Back</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="page-shell">
+    <section class="hero">
+      <h1 id="heroTitle">Manage Leave Requests</h1>
+      <p id="heroSubtitle">Submit leave requests and manage approvals without using the API directly.</p>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Create Leave Request</h2>
+        <div class="filter-row" id="doctorPickerRow" style="display:none;">
+          <div class="form-group">
+            <label for="doctorSelect">Doctor</label>
+            <select id="doctorSelect"></select>
+          </div>
+          <div class="form-group">
+            <label for="filterStatus">Filter Status</label>
+            <select id="filterStatus">
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Start Date</label>
+            <input type="date" id="startDate">
+          </div>
+          <div class="form-group">
+            <label for="endDate">End Date</label>
+            <input type="date" id="endDate">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reason">Reason</label>
+          <textarea id="reason" placeholder="Optional note for the leave request"></textarea>
+        </div>
+
+        <div class="action-row">
+          <button class="primary" onclick="submitLeaveRequest()">Submit Request</button>
+          <button onclick="loadLeaves()">Refresh List</button>
+        </div>
+        <div id="statusMessage"></div>
+      </section>
+
+      <section class="panel">
+        <h2 id="reviewTitle">Leave Requests</h2>
+        <div id="pendingSummary" class="muted" style="margin-bottom:12px;"></div>
+        <div style="overflow:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>Dates</th>
+                <th>Status</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leaveTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const adminToken = localStorage.getItem('adminToken') || '';
+    const doctorToken = localStorage.getItem('doctorToken') || '';
+    const doctorProfile = JSON.parse(localStorage.getItem('doctor') || 'null');
+    const isAdmin = localStorage.getItem('adminLoggedIn') === 'true' && Boolean(adminToken);
+    const isDoctor = Boolean(doctorProfile && doctorToken);
+    const API_BASE = 'http://localhost:5000/api';
+    let doctors = [];
+    let leaveRows = [];
+
+    if (!isAdmin && !isDoctor) {
+      window.location.href = 'index.html';
+    }
+
+    function goHome() {
+      window.location.href = 'index.html';
+    }
+
+    function goBack() {
+      window.history.back();
+    }
+
+    function logout() {
+      if (isAdmin) {
+        localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminRefreshToken');
+        window.location.href = 'admin.html';
+        return;
+      }
+
+      localStorage.removeItem('doctor');
+      localStorage.removeItem('doctorToken');
+      window.location.href = 'doctor-login.html';
+    }
+
+    function activeToken() {
+      return isAdmin ? adminToken : doctorToken;
+    }
+
+    async function apiFetch(path, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+        Authorization: `Bearer ${activeToken()}`
+      };
+
+      return fetch(`${API_BASE}${path}`, { ...options, headers });
+    }
+
+    function currentDoctorId() {
+      if (isDoctor) {
+        return doctorProfile?.doctorId || doctorProfile?.id;
+      }
+      return Number(document.getElementById('doctorSelect').value || 0);
+    }
+
+    function setStatus(message, isError = false) {
+      const el = document.getElementById('statusMessage');
+      el.textContent = message;
+      el.style.color = isError ? '#b42318' : '#146c43';
+    }
+
+    function statusPill(status) {
+      const normalized = String(status || 'Pending').toLowerCase();
+      const className = normalized === 'approved' ? 'pill-approved' : normalized === 'rejected' ? 'pill-rejected' : 'pill-pending';
+      return `<span class="pill ${className}">${status || 'Pending'}</span>`;
+    }
+
+    function applyStatusFilter(rows) {
+      const filter = document.getElementById('filterStatus')?.value || '';
+      if (!filter) {
+        return rows;
+      }
+      return rows.filter((row) => row.status === filter);
+    }
+
+    function renderLeaves() {
+      const body = document.getElementById('leaveTableBody');
+      const filtered = applyStatusFilter(leaveRows);
+      const pendingCount = leaveRows.filter((row) => row.status === 'Pending').length;
+      document.getElementById('pendingSummary').textContent = `${pendingCount} pending request(s)`;
+
+      if (!filtered.length) {
+        body.innerHTML = `<tr><td colspan="5"><div class="empty-state">No leave requests found for the current view.</div></td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map((leave) => {
+        const actions = isAdmin && leave.status === 'Pending'
+          ? `
+            <div class="action-row">
+              <button onclick="reviewLeave(${leave.id}, 'Approved')">Approve</button>
+              <button style="background:#b42318;" onclick="reviewLeave(${leave.id}, 'Rejected')">Reject</button>
+            </div>
+          `
+          : '<span class="muted">No actions</span>';
+
+        return `
+          <tr>
+            <td>${leave.doctor_name || 'Doctor #' + leave.doctor_id}</td>
+            <td>${leave.start_date} to ${leave.end_date}</td>
+            <td>${statusPill(leave.status)}</td>
+            <td>${leave.reason || '<span class="muted">No reason provided</span>'}</td>
+            <td>${actions}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadDoctors() {
+      if (!isAdmin) {
+        return;
+      }
+
+      const response = await apiFetch('/doctors');
+      const data = await response.json();
+      doctors = Array.isArray(data) ? data : [];
+
+      const select = document.getElementById('doctorSelect');
+      select.innerHTML = doctors
+        .map((doctor) => `<option value="${doctor.id || doctor.doctorId}">Dr. ${doctor.name}</option>`)
+        .join('');
+    }
+
+    async function loadLeaves() {
+      try {
+        setStatus('');
+        if (isAdmin) {
+          if (!doctors.length) {
+            await loadDoctors();
+          }
+
+          const requests = doctors.map(async (doctor) => {
+            const doctorId = doctor.id || doctor.doctorId;
+            const response = await apiFetch(`/doctors/${doctorId}/leaves`);
+            const data = await response.json();
+            if (!response.ok) {
+              throw new Error(data.message || 'Failed to load leave requests');
+            }
+            return data.map((item) => ({ ...item, doctor_name: doctor.name }));
+          });
+
+          leaveRows = (await Promise.all(requests)).flat().sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+        } else {
+          const doctorId = currentDoctorId();
+          const response = await apiFetch(`/doctors/${doctorId}/leaves`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || 'Failed to load leave requests');
+          }
+          leaveRows = data.map((item) => ({ ...item, doctor_name: doctorProfile?.name || 'My account' }));
+        }
+
+        renderLeaves();
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    }
+
+    async function submitLeaveRequest() {
+      try {
+        const doctorId = currentDoctorId();
+        const payload = {
+          start_date: document.getElementById('startDate').value,
+          end_date: document.getElementById('endDate').value,
+          reason: document.getElementById('reason').value.trim()
+        };
+
+        if (!doctorId || !payload.start_date || !payload.end_date) {
+          setStatus('Doctor, start date, and end date are required.', true);
+          return;
+        }
+
+        const response = await apiFetch(`/doctors/${doctorId}/leaves`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to submit leave request');
+        }
+
+        document.getElementById('reason').value = '';
+        setStatus(data.message || 'Leave request submitted successfully.');
+        await loadLeaves();
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    }
+
+    async function reviewLeave(leaveId, status) {
+      const reviewNotes = window.prompt(`Optional notes for ${status.toLowerCase()}:`, '') || '';
+
+      try {
+        const response = await apiFetch(`/doctors/leaves/${leaveId}/status`, {
+          method: 'PUT',
+          body: JSON.stringify({ status, review_notes: reviewNotes })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to update leave request');
+        }
+
+        setStatus(data.message || 'Leave request updated.');
+        await loadLeaves();
+      } catch (error) {
+        setStatus(error.message, true);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (isAdmin) {
+        document.getElementById('doctorPickerRow').style.display = 'grid';
+        document.getElementById('heroSubtitle').textContent = 'Review leave requests across all doctors, or submit one directly for a selected doctor.';
+        document.getElementById('reviewTitle').textContent = 'All Leave Requests';
+        await loadDoctors();
+        document.getElementById('doctorSelect').addEventListener('change', () => setStatus('Selected doctor updated.'));
+        document.getElementById('filterStatus').addEventListener('change', renderLeaves);
+      } else {
+        document.getElementById('heroTitle').textContent = 'My Leave Requests';
+        document.getElementById('heroSubtitle').textContent = 'Submit a leave request and track its approval status.';
+        document.getElementById('reviewTitle').textContent = 'My Leave History';
+      }
+
+      await loadLeaves();
+    });
+  </script>
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

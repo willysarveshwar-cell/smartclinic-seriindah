@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Reports | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Reports</h2>
+  <button onclick="back()">Back</button>
+</div>
+
+<div class="dashboard-container">
+  <div class="card">
+    <h3>System Reports</h3>
+    <div class="flex-actions">
+      <button class="primary" onclick="downloadReport('pdf')">Download PDF</button>
+      <button class="primary" onclick="downloadReport('excel')">Download Excel</button>
+    </div>
+    <canvas id="dailyChart" height="120"></canvas>
+    <canvas id="statusChart" height="120" style="margin-top:20px;"></canvas>
+  </div>
+</div>
+
+<script>
+function back() {
+  window.location.href = "admin-dashboard.html";
+}
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function authHeaders(contentType = "application/json") {
+  const headers = {};
+  const token = getAdminToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (contentType) headers["Content-Type"] = contentType;
+  return headers;
+}
+
+async function apiFetch(url, options = {}) {
+  return fetch(url, { ...options, headers: { ...(options.headers || {}), ...authHeaders(options.headers ? null : "application/json") } });
+}
+
+async function downloadReport(format) {
+  if (!getAdminToken()) {
+    window.location.href = "admin.html";
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/admin/reports/export?format=${format}`, { method: "GET" });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Failed to download report");
+    }
+    const blob = await res.blob();
+    const extension = format === "pdf" ? "pdf" : "xlsx";
+    const filename = `smart-clinic-report.${extension}`;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert(`Report download failed: ${error.message}`);
+  }
+}
+
+async function loadAnalytics() {
+  if (!getAdminToken()) {
+    window.location.href = "admin.html";
+    return;
+  }
+
+  const res = await apiFetch("http://localhost:5000/api/admin/analytics?days=7", { method: "GET" });
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      window.location.href = "admin.html";
+      return;
+    }
+    const err = await res.json();
+    throw new Error(err.message || "Failed to load analytics");
+  }
+  const data = await res.json();
+
+  const labels = data.appointmentsByDate.map(item => item.date);
+  const values = data.appointmentsByDate.map(item => item.total);
+
+  new Chart(document.getElementById("dailyChart"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Appointments per day",
+        data: values,
+        borderColor: "#0a58ca",
+        backgroundColor: "rgba(10,88,202,0.12)",
+        fill: true,
+        tension: 0.3
+      }]
+    }
+  });
+
+  new Chart(document.getElementById("statusChart"), {
+    type: "bar",
+    data: {
+      labels: data.appointmentsByStatus.map(item => item.status),
+      datasets: [{
+        label: "Appointments by status",
+        data: data.appointmentsByStatus.map(item => item.total),
+        backgroundColor: ["#ffc107", "#17a2b8", "#28a745", "#dc3545"]
+      }]
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!getAdminToken()) {
+    window.location.href = "admin.html";
+    return;
+  }
+  loadAnalytics();
+});
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "smart-clinic-frontend",
+  "private": true,
+  "scripts": {
+    "build:css": "postcss ./src/input.css -o ./dist/app.css --verbose",
+    "watch:css": "postcss ./src/input.css -o ./dist/app.css --watch --verbose",
+    "build": "npm run build:css"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "postcss-cli": "^11.0.0",
+    "postcss-import": "^16.1.0",
+    "tailwindcss": "^3.4.17"
+  }
+}

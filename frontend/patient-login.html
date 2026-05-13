@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Patient Portal | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Patient Portal</h2>
+  <div>
+    <button onclick="window.location.href='index.html'">Home</button>
+    <button onclick="window.history.back()">Back</button>
+  </div>
+</div>
+
+<div class="dashboard-container patient-portal-grid">
+  <div class="form-container">
+    <h2>Patient Login</h2>
+    <input id="loginEmail" type="email" placeholder="Email">
+    <input id="loginPassword" type="password" placeholder="Password">
+    <button class="primary" onclick="patientLogin()">Login</button>
+    <p id="loginMessage" class="error-text"></p>
+  </div>
+
+  <div class="form-container">
+    <h2>Create Account</h2>
+    <input id="registerName" placeholder="Full Name">
+    <input id="registerEmail" type="email" placeholder="Email">
+    <input id="registerPhone" placeholder="Phone">
+    <input id="registerIc" placeholder="IC Number">
+    <input id="registerPassword" type="password" placeholder="Password">
+    <button class="primary" onclick="patientRegister()">Register</button>
+    <p id="registerMessage" class="error-text"></p>
+  </div>
+</div>
+
+<script>
+async function patientLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+
+  const res = await fetch('http://localhost:5000/api/patients/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById('loginMessage').innerText = data.message || 'Login failed';
+    return;
+  }
+
+  localStorage.setItem('patientToken', data.token);
+  localStorage.setItem('patientProfile', JSON.stringify(data.patient));
+  window.location.href = 'patient-dashboard.html';
+}
+
+async function patientRegister() {
+  const payload = {
+    fullName: document.getElementById('registerName').value.trim(),
+    email: document.getElementById('registerEmail').value.trim(),
+    phone: document.getElementById('registerPhone').value.trim(),
+    icNumber: document.getElementById('registerIc').value.trim(),
+    password: document.getElementById('registerPassword').value.trim()
+  };
+
+  const res = await fetch('http://localhost:5000/api/patients/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById('registerMessage').innerText = data.message || 'Registration failed';
+    return;
+  }
+
+  localStorage.setItem('patientToken', data.token);
+  localStorage.setItem('patientProfile', JSON.stringify(data.patient));
+  window.location.href = 'patient-dashboard.html';
+}
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>
