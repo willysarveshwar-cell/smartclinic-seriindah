@@ -84,6 +84,7 @@
     <label for="notesInput">Clinical notes</label>
     <textarea id="notesInput" rows="3" placeholder="Additional notes…"></textarea>
     <button type="button" class="primary" style="width:auto;margin-top:12px;" onclick="saveMedicalRecord()">Save medical record</button>
+    <button id="followupToggleBtn" type="button" class="btn-outline" style="margin-top:12px;margin-left:8px;" onclick="">Mark for follow-up</button>
   </div>
 </div>
 
@@ -183,6 +184,8 @@ function loadPatientDescription() {
     .then(res => res.json())
     .then(data => {
       textarea.value = data.description || "";
+      // set follow-up button state if appointment contains flag
+      try { setFollowupButton(appointmentId, Boolean(data.follow_up)); } catch (e) { /* ignore */ }
       return apiFetch(`http://localhost:5000/api/doctors/${activeDoctorId}/medical-records?appointment_id=${appointmentId}`);
     })
     .then(res => res.json())
@@ -199,6 +202,35 @@ function loadPatientDescription() {
       prescriptionInput.value = "";
       notesInput.value = "";
     });
+}
+
+// Manage follow-up button UI
+function setFollowupButton(appointmentId, current) {
+  const btn = document.getElementById('followupToggleBtn');
+  if (!btn) return;
+  btn.dataset.appointmentId = appointmentId;
+  btn.dataset.current = current ? '1' : '0';
+  btn.textContent = current ? 'Unmark Follow-up' : 'Mark for follow-up';
+  btn.style.background = current ? '#ffefef' : '';
+  btn.onclick = () => toggleFollowUpForAppointment(appointmentId, current);
+}
+
+async function toggleFollowUpForAppointment(appointmentId, current) {
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/appointments/${appointmentId}/followup`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ follow_up: !current })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || 'Failed to update follow-up');
+      return;
+    }
+    setFollowupButton(appointmentId, !current);
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
 }
 
 async function loadAppointments() {

@@ -5,17 +5,208 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f766e">
   <title>Manage Appointments | Smart Clinic</title>
   <link rel="stylesheet" href="dist/app.css">
+  <style>
+    /* ── Page header banner ─────────────────────── */
+    .appt-header {
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      color: #fff;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .appt-header i  { font-size: 2rem; opacity: .85; }
+    .appt-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+    .appt-header p  { margin: 4px 0 0; font-size: .88rem; opacity: .82; }
+
+    /* ── Filter card ────────────────────────────── */
+    .filter-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .filter-row {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group label {
+      font-size: .75rem; font-weight: 600; color: #64748b;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .filter-group input,
+    .filter-group select {
+      padding: 9px 14px; border: 1px solid #e2e8f0;
+      border-radius: 10px; font-size: .88rem;
+      font-family: inherit; color: #0f172a; background: #f8fafc;
+      min-width: 160px; transition: border-color .15s;
+    }
+    .filter-group input:focus,
+    .filter-group select:focus { border-color: #0d9488; outline: none; }
+    .filter-btns { display: flex; gap: 8px; align-items: flex-end; }
+    .btn-teal {
+      padding: 9px 18px; background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .88rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .btn-teal:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(13,148,136,.3); }
+    .btn-outline {
+      padding: 9px 16px; border: 1px solid #e2e8f0;
+      background: #fff; color: #64748b; border-radius: 10px;
+      font-size: .88rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-outline:hover { background: #f8fafc; }
+
+    /* ── Table card ─────────────────────────────── */
+    .table-card {
+      background: #fff; border: 1px solid #e2e8f0;
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .table-card-head {
+      padding: 16px 22px; border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .table-card-head-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-size: .9rem;
+    }
+    .table-card-head h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
+    .table-wrap { overflow-x: auto; }
+
+    .appt-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .appt-table thead {
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+    }
+    .appt-table thead th {
+      padding: 13px 16px; color: rgba(255,255,255,.9);
+      font-size: .75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; text-align: left; white-space: nowrap;
+    }
+    .appt-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .12s; }
+    .appt-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .appt-table tbody tr:hover { background: #f0fdfa !important; }
+    .appt-table td { padding: 12px 16px; color: #1e293b; vertical-align: middle; }
+
+    .queue-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 36px; height: 26px; padding: 0 8px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border-radius: 20px;
+      font-weight: 700; font-size: .8rem;
+    }
+
+    /* Status pills */
+    .s-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 11px; border-radius: 20px;
+      font-size: .77rem; font-weight: 600; white-space: nowrap;
+    }
+    .s-waiting  { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+    .s-progress { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .s-done     { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .s-cancel   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+
+    /* ── Action icon buttons ────────────────────── */
+    .action-cell { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+    .act-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: none; cursor: pointer; font-size: .82rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .15s; font-family: inherit;
+    }
+    .act-btn:disabled { opacity: .35; cursor: not-allowed; transform: none !important; }
+    .act-btn.start    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .act-btn.start:hover:not(:disabled)    { background: #1d4ed8; color: #fff; }
+    .act-btn.complete { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+    .act-btn.complete:hover:not(:disabled) { background: #16a34a; color: #fff; }
+    .act-btn.cancel   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
+    .act-btn.cancel:hover:not(:disabled)   { background: #dc2626; color: #fff; }
+    .act-btn.edit     { background: #fffbeb; color: #d97706; border: 1px solid #fcd34d; }
+    .act-btn.edit:hover:not(:disabled)     { background: #d97706; color: #fff; }
+    .act-btn.del      { background: #fdf4ff; color: #9333ea; border: 1px solid #d8b4fe; }
+    .act-btn.del:hover:not(:disabled)      { background: #9333ea; color: #fff; }
+
+    .empty-row td { text-align: center; padding: 40px; color: #94a3b8; }
+
+    /* ── Edit Modal ─────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+      z-index: 9000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 28px; width: 100%; max-width: 500px;
+      max-height: 90vh; overflow-y: auto;
+      animation: modal-in .2s ease;
+    }
+    @keyframes modal-in {
+      from { transform: scale(.95) translateY(-10px); opacity:0; }
+      to   { transform: scale(1)  translateY(0);      opacity:1; }
+    }
+    .modal-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 22px;
+    }
+    .modal-title-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-size: .9rem; flex-shrink: 0;
+    }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .modal-grid .full { grid-column: 1 / -1; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label {
+      font-size: .75rem; font-weight: 600; color: #64748b;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .form-group input,
+    .form-group select {
+      padding: 10px 14px; border: 1px solid #e2e8f0;
+      border-radius: 10px; font-size: .9rem; font-family: inherit;
+      color: #0f172a; background: #f8fafc; transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: #0d9488; outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
+    .modal-error { color: #dc2626; font-size: .83rem; margin: 10px 0 0; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .modal-save {
+      flex: 1; padding: 11px 20px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .9rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .modal-save:hover { box-shadow: 0 4px 14px rgba(13,148,136,.35); }
+    .modal-cancel {
+      padding: 11px 20px; border: 1px solid #e2e8f0;
+      background: #f8fafc; color: #64748b;
+      border-radius: 10px; font-size: .9rem; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+    }
+    .modal-cancel:hover { background: #f1f5f9; }
+  </style>
 </head>
 <body>
 
 <div class="navbar">
-  <h2>Appointments</h2>
+  <h2><i class="fas fa-calendar-check" style="margin-right:8px;"></i>Appointments</h2>
   <div>
     <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
     <button onclick="back()"><i class="fas fa-arrow-left"></i> Back</button>
@@ -23,64 +214,122 @@
 </div>
 
 <div class="dashboard-container">
-  <h2>Appointments</h2>
-  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 14px; align-items:center;">
-    <input id="filterPatient" placeholder="Search patient name" style="padding:8px; min-width: 220px;">
-    <input id="filterDate" type="date" style="padding:8px;">
-    <select id="filterStatus" style="padding:8px; min-width: 170px;">
-      <option value="">All Status</option>
-      <option value="Waiting">Waiting</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Completed">Completed</option>
-      <option value="Cancelled">Cancelled</option>
-    </select>
-    <button class="primary" onclick="loadAppointments()" style="width:auto;">Apply Filter</button>
-    <button onclick="clearFilter()" style="width:auto;padding:9px 16px;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer;">Clear</button>
+
+  <!-- Page banner -->
+  <div class="appt-header">
+    <i class="fas fa-calendar-check"></i>
+    <div>
+      <h1>Appointment Management</h1>
+      <p>View, update, and manage all patient appointments</p>
+    </div>
   </div>
-  <div id="appointmentsContainer">
-    <p>Loading appointments...</p>
+
+  <!-- Filter section -->
+  <div class="filter-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label><i class="fas fa-search" style="margin-right:4px;"></i>Patient Name</label>
+        <input id="filterPatient" placeholder="Search patient…">
+      </div>
+      <div class="filter-group">
+        <label><i class="fas fa-calendar" style="margin-right:4px;"></i>Date</label>
+        <input id="filterDate" type="date">
+      </div>
+      <div class="filter-group">
+        <label><i class="fas fa-filter" style="margin-right:4px;"></i>Status</label>
+        <select id="filterStatus">
+          <option value="">All Status</option>
+          <option value="Waiting">Waiting</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="filter-btns">
+        <button class="btn-teal" onclick="loadAppointments()">
+          <i class="fas fa-search"></i> Apply
+        </button>
+        <button class="btn-outline" onclick="clearFilter()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- Table section -->
+  <div class="table-card">
+    <div class="table-card-head">
+      <div class="table-card-head-icon"><i class="fas fa-table"></i></div>
+      <h2>Appointments List</h2>
+    </div>
+    <div class="table-wrap">
+      <div id="appointmentsContainer">
+        <div style="text-align:center;padding:40px;color:#94a3b8;">
+          <i class="fas fa-spinner fa-spin" style="font-size:1.5rem;margin-bottom:10px;display:block;"></i>
+          Loading appointments…
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
+<!-- ── Edit Modal ── -->
 <div id="editModal" class="modal-overlay">
   <div class="modal-box">
-    <h3 style="margin-top:0;">Edit Appointment</h3>
+    <h3 class="modal-title">
+      <span class="modal-title-icon"><i class="fas fa-edit"></i></span>
+      Edit Appointment
+    </h3>
     <input id="editAppointmentId" type="hidden">
-    <label>Patient Name</label>
-    <input id="editPatientName" placeholder="Patient Name">
-    <label>IC Number</label>
-    <input id="editIcNumber" placeholder="IC Number">
-    <label>Doctor</label>
-    <select id="editDoctor"></select>
-    <label>Date</label>
-    <input id="editDate" type="date">
-    <label>Time</label>
-    <input id="editTime" type="time">
-    <label>Status</label>
-    <select id="editStatus">
-      <option value="Waiting">Waiting</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Completed">Completed</option>
-      <option value="Cancelled">Cancelled</option>
-    </select>
-    <label>Description</label>
-    <input id="editDescription" placeholder="Description">
-    <p id="editError" style="color:#c62828;font-size:13px;"></p>
+    <div class="modal-grid">
+      <div class="form-group">
+        <label>Patient Name</label>
+        <input id="editPatientName" placeholder="Patient Name">
+      </div>
+      <div class="form-group">
+        <label>IC Number</label>
+        <input id="editIcNumber" placeholder="IC Number">
+      </div>
+      <div class="form-group full">
+        <label>Doctor</label>
+        <select id="editDoctor"></select>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input id="editDate" type="date">
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input id="editTime" type="time">
+      </div>
+      <div class="form-group full">
+        <label>Status</label>
+        <select id="editStatus">
+          <option value="Waiting">Waiting</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Description</label>
+        <input id="editDescription" placeholder="Notes (optional)">
+      </div>
+    </div>
+    <p id="editError" class="modal-error"></p>
     <div class="modal-actions">
-      <button class="primary" onclick="saveAppointment()" style="width:auto;">Save</button>
-      <button onclick="closeEditModal()" style="width:auto;padding:9px 16px;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer;">Cancel</button>
+      <button class="modal-save" onclick="saveAppointment()">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+      <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
     </div>
   </div>
 </div>
 
 <script>
-function back() {
-  window.location.href = "admin-dashboard.html";
-}
-
-function goHome() {
-  window.location.href = "index.html";
-}
+function back()   { window.location.href = "admin-dashboard.html"; }
+function goHome() { window.location.href = "index.html"; }
 
 function clearFilter() {
   document.getElementById("filterPatient").value = "";
@@ -89,140 +338,183 @@ function clearFilter() {
   loadAppointments();
 }
 
-function getAdminToken() {
-  return localStorage.getItem("adminToken") || "";
-}
+function getAdminToken() { return localStorage.getItem("adminToken") || ""; }
 
-async function apiFetch(url, options = {}) {
+async function apiFetch(url, options) {
+  options = options || {};
   const token = getAdminToken();
-  const headers = {
-    ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
-  };
-  return fetch(url, { ...options, headers });
+  const headers = Object.assign({}, options.headers || {});
+  if (token) headers.Authorization = "Bearer " + token;
+  return fetch(url, Object.assign({}, options, { headers }));
 }
 
 async function loadDoctors() {
-  const select = document.getElementById("editDoctor");
-  if (!select) return;
-
+  const sel = document.getElementById("editDoctor");
+  if (!sel) return;
   const res = await fetch("http://localhost:5000/api/doctors");
-  const doctors = await res.json();
-  select.innerHTML = doctors.map((doctor) =>
-    `<option value="${doctor.doctorId}">${doctor.name}</option>`
+  const docs = await res.json();
+  sel.innerHTML = docs.map(d =>
+    `<option value="${d.doctorId}">${escapeHtml(d.name)}</option>`
   ).join("");
 }
 
-const STATUS_STYLE = {
-  "Waiting":     "background:#fff3cd;color:#856404;",
-  "In Progress": "background:#cce5ff;color:#004085;",
-  "Completed":   "background:#d4edda;color:#155724;",
-  "Cancelled":   "background:#f8d7da;color:#721c24;"
+function escapeHtml(s) {
+  return String(s || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+const STATUS_CLASS = {
+  "Waiting":     "s-waiting",
+  "In Progress": "s-progress",
+  "Completed":   "s-done",
+  "Cancelled":   "s-cancel"
+};
+
+const STATUS_ICON = {
+  "Waiting":     "hourglass-half",
+  "In Progress": "stethoscope",
+  "Completed":   "check-circle",
+  "Cancelled":   "times-circle"
 };
 
 function loadAppointments() {
   const patient = document.getElementById("filterPatient").value.trim();
   const status  = document.getElementById("filterStatus").value;
   const dateEl  = document.getElementById("filterDate");
-  const date    = dateEl && dateEl.value ? dateEl.value : new Date().toISOString().split("T")[0];
+  const date    = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().split("T")[0];
 
   const query = new URLSearchParams({ date });
   if (patient) query.set("patient_name", patient);
   if (status)  query.set("status", status);
 
-  apiFetch(`http://localhost:5000/api/appointments?${query.toString()}`)
-    .then(res => res.json())
+  apiFetch("http://localhost:5000/api/appointments?" + query.toString())
+    .then(r => r.json())
     .then(data => {
       const container = document.getElementById("appointmentsContainer");
 
       if (!Array.isArray(data) || data.length === 0) {
-        container.innerHTML = "<p>No appointments found for the selected filter.</p>";
+        container.innerHTML = `
+          <table class="appt-table">
+            <tbody>
+              <tr class="empty-row">
+                <td colspan="8">
+                  <i class="fas fa-calendar-times" style="font-size:1.8rem;display:block;margin-bottom:10px;color:#cbd5e1;"></i>
+                  No appointments found for the selected filter.
+                </td>
+              </tr>
+            </tbody>
+          </table>`;
         return;
       }
 
-      let html = `
-        <table class="appointments-table" style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr style="background:linear-gradient(90deg,#0848a6,#0b5ed7);color:#fff;">
-              <th style="padding:11px 14px;text-align:left;">Queue #</th>
-              <th style="padding:11px 14px;text-align:left;">Patient Name</th>
-              <th style="padding:11px 14px;text-align:left;">IC Number</th>
-              <th style="padding:11px 14px;text-align:left;">Doctor</th>
-              <th style="padding:11px 14px;text-align:left;">Date</th>
-              <th style="padding:11px 14px;text-align:left;">Time</th>
-              <th style="padding:11px 14px;text-align:left;">Status</th>
-              <th style="padding:11px 14px;text-align:left;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
+      let rows = "";
+      data.forEach(apt => {
+        const sc = STATUS_CLASS[apt.status] || "s-waiting";
+        const si = STATUS_ICON[apt.status]  || "circle";
+        const isWaiting   = apt.status === "Waiting";
+        const isDone      = apt.status === "Completed" || apt.status === "Cancelled";
+        const isCancelled = apt.status === "Cancelled";
+        const isCompleted = apt.status === "Completed";
 
-      data.forEach((apt, i) => {
-        const rowBg = i % 2 === 0 ? "#fff" : "#f8fbff";
-        const st = STATUS_STYLE[apt.status] || "";
-        html += `
-          <tr style="background:${rowBg};">
-            <td style="padding:10px 14px;"><strong>#${apt.queue_number}</strong></td>
-            <td style="padding:10px 14px;font-weight:600;">${apt.patient_name}</td>
-            <td style="padding:10px 14px;">${apt.ic_number}</td>
-            <td style="padding:10px 14px;">Dr. ${apt.doctor_name || "N/A"}</td>
-            <td style="padding:10px 14px;">${apt.appointment_date}</td>
-            <td style="padding:10px 14px;">${apt.appointment_time}</td>
-            <td style="padding:10px 14px;"><span style="${st}padding:3px 9px;border-radius:12px;font-size:13px;font-weight:600;">${apt.status}</span></td>
-            <td style="padding:10px 14px;">
-              <button class="btn-small" onclick="updateStatus(${apt.id}, 'In Progress')" ${apt.status !== 'Waiting' ? 'disabled style="opacity:0.4;"' : ''}>Start</button>
-              <button class="btn-small" onclick="updateStatus(${apt.id}, 'Completed')" ${apt.status === 'Completed' || apt.status === 'Cancelled' ? 'disabled style="opacity:0.4;"' : ''}>Complete</button>
-              <button class="btn-small cancel" onclick="updateStatus(${apt.id}, 'Cancelled')" ${apt.status === 'Cancelled' || apt.status === 'Completed' ? 'disabled style="opacity:0.4;"' : ''}>Cancel</button>
-              <button class="btn-small" onclick="openEditModal(${apt.id})">Edit</button>
-              <button class="btn-small cancel" onclick="deleteAppointment(${apt.id})">Delete</button>
+        rows += `
+          <tr>
+            <td><span class="queue-num">#${apt.queue_number}</span></td>
+            <td><strong>${escapeHtml(apt.patient_name)}</strong></td>
+            <td style="color:#475569;">${escapeHtml(apt.ic_number)}</td>
+            <td>Dr. ${escapeHtml(apt.doctor_name || "N/A")}</td>
+            <td style="white-space:nowrap;">${escapeHtml(apt.appointment_date)}</td>
+            <td style="white-space:nowrap;">${escapeHtml(apt.appointment_time)}</td>
+            <td>
+              <span class="s-pill ${sc}">
+                <i class="fas fa-${si}"></i>${apt.status}
+              </span>
             </td>
-          </tr>
-        `;
+            <td>
+              <div class="action-cell">
+                <button class="act-btn start"
+                  onclick="updateStatus(${apt.id},'In Progress')"
+                  title="Start Consultation"
+                  ${!isWaiting ? "disabled" : ""}>
+                  <i class="fas fa-play"></i>
+                </button>
+                <button class="act-btn complete"
+                  onclick="updateStatus(${apt.id},'Completed')"
+                  title="Mark as Completed"
+                  ${isDone ? "disabled" : ""}>
+                  <i class="fas fa-check"></i>
+                </button>
+                <button class="act-btn cancel"
+                  onclick="updateStatus(${apt.id},'Cancelled')"
+                  title="Cancel Appointment"
+                  ${(isCancelled || isCompleted) ? "disabled" : ""}>
+                  <i class="fas fa-times"></i>
+                </button>
+                <button class="act-btn edit"
+                  onclick="openEditModal(${apt.id})"
+                  title="Edit Details">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="act-btn del"
+                  onclick="deleteAppointment(${apt.id})"
+                  title="Delete Appointment">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>`;
       });
 
-      html += "</tbody></table>";
-      container.innerHTML = html;
+      container.innerHTML = `
+        <table class="appt-table">
+          <thead>
+            <tr>
+              <th>Queue #</th>
+              <th>Patient Name</th>
+              <th>IC Number</th>
+              <th>Doctor</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
     })
-    .catch(err => {
-      console.error("Error loading appointments:", err);
-      document.getElementById("appointmentsContainer").innerHTML = "<p style='color:red;'>Error loading appointments. Is the backend running?</p>";
+    .catch(() => {
+      document.getElementById("appointmentsContainer").innerHTML =
+        '<div style="padding:32px;text-align:center;color:#dc2626;"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>Error loading appointments. Is the backend running?</div>';
     });
 }
 
 async function updateStatus(id, status) {
   try {
-    const res = await apiFetch(`http://localhost:5000/api/appointments/${id}/status`, {
+    const res = await apiFetch("http://localhost:5000/api/appointments/" + id + "/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
     });
-
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to update status");
-
     loadAppointments();
-  } catch (error) {
-    alert(error.message);
-  }
+  } catch (e) { alert(e.message); }
 }
 
 async function openEditModal(id) {
-  const res = await apiFetch(`http://localhost:5000/api/appointments/${id}`);
+  const res = await apiFetch("http://localhost:5000/api/appointments/" + id);
   const apt = await res.json();
-  if (!res.ok) {
-    alert(apt.message || "Failed to load appointment");
-    return;
-  }
+  if (!res.ok) { alert(apt.message || "Failed to load appointment"); return; }
 
   document.getElementById("editAppointmentId").value = apt.id;
-  document.getElementById("editPatientName").value = apt.patient_name || "";
-  document.getElementById("editIcNumber").value = apt.ic_number || "";
-  document.getElementById("editDoctor").value = String(apt.doctor_id || "");
-  document.getElementById("editDate").value = apt.appointment_date || "";
-  document.getElementById("editTime").value = String(apt.appointment_time || "").slice(0, 5);
-  document.getElementById("editStatus").value = apt.status || "Waiting";
-  document.getElementById("editDescription").value = apt.description || "";
-  document.getElementById("editError").textContent = "";
+  document.getElementById("editPatientName").value   = apt.patient_name || "";
+  document.getElementById("editIcNumber").value      = apt.ic_number || "";
+  document.getElementById("editDoctor").value        = String(apt.doctor_id || "");
+  document.getElementById("editDate").value          = apt.appointment_date || "";
+  document.getElementById("editTime").value          = String(apt.appointment_time || "").slice(0,5);
+  document.getElementById("editStatus").value        = apt.status || "Waiting";
+  document.getElementById("editDescription").value   = apt.description || "";
+  document.getElementById("editError").textContent   = "";
   document.getElementById("editModal").classList.add("open");
 }
 
@@ -233,59 +525,48 @@ function closeEditModal() {
 async function saveAppointment() {
   const id = document.getElementById("editAppointmentId").value;
   const body = {
-    patient_name: document.getElementById("editPatientName").value.trim(),
-    ic_number: document.getElementById("editIcNumber").value.trim(),
-    doctor_id: Number(document.getElementById("editDoctor").value),
+    patient_name:     document.getElementById("editPatientName").value.trim(),
+    ic_number:        document.getElementById("editIcNumber").value.trim(),
+    doctor_id:        Number(document.getElementById("editDoctor").value),
     appointment_date: document.getElementById("editDate").value,
     appointment_time: document.getElementById("editTime").value,
-    status: document.getElementById("editStatus").value,
-    description: document.getElementById("editDescription").value.trim()
+    status:           document.getElementById("editStatus").value,
+    description:      document.getElementById("editDescription").value.trim()
   };
 
-  const res = await apiFetch(`http://localhost:5000/api/appointments/${id}`, {
+  const res = await apiFetch("http://localhost:5000/api/appointments/" + id, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-
   const data = await res.json();
   if (!res.ok) {
-    document.getElementById("editError").textContent = data.message || "Failed to update appointment";
+    document.getElementById("editError").textContent = data.message || "Failed to save";
     return;
   }
-
   closeEditModal();
   loadAppointments();
 }
 
 async function deleteAppointment(id) {
   if (!confirm("Delete this appointment permanently?")) return;
-
-  const res = await apiFetch(`http://localhost:5000/api/appointments/${id}`, {
-    method: "DELETE"
-  });
+  const res  = await apiFetch("http://localhost:5000/api/appointments/" + id, { method: "DELETE" });
   const data = await res.json();
-  if (!res.ok) {
-    alert(data.message || "Failed to delete appointment");
-    return;
-  }
+  if (!res.ok) { alert(data.message || "Delete failed"); return; }
   loadAppointments();
 }
 
-// Set today as default date filter
+// Init
 document.addEventListener("DOMContentLoaded", () => {
-  if (!localStorage.getItem("adminToken")) {
-    window.location.href = "admin.html";
-    return;
-  }
+  if (!localStorage.getItem("adminToken")) { window.location.href = "admin.html"; return; }
   const dateEl = document.getElementById("filterDate");
   if (dateEl) dateEl.value = new Date().toISOString().split("T")[0];
   loadDoctors();
   loadAppointments();
 });
 
-document.getElementById("editModal").addEventListener("click", (event) => {
-  if (event.target.id === "editModal") closeEditModal();
+document.getElementById("editModal").addEventListener("click", e => {
+  if (e.target.id === "editModal") closeEditModal();
 });
 </script>
 

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <title>Doctor Dashboard | Smart Clinic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="stylesheet" href="modern-styles.css">
+</head>
+
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand" id="doctorName">Doctor Dashboard</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="window.location.href='manage-leaves.html'"><i class="fas fa-calendar-x"></i> Leave Request</button>
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+    <button class="btn btn-primary btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Doctor Dashboard</h1>
+    <p class="page-description">Manage your appointments and patient care</p>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <section class="section">
+    <div class="toolbar">
+      <button class="btn btn-success" onclick="callNextPatient()"><i class="fas fa-user-check"></i> Call Next Patient</button>
+      <button class="btn btn-secondary" onclick="refreshData()"><i class="fas fa-sync"></i> Refresh Data</button>
+      <span id="refreshState" class="text-muted" style="margin-left: var(--spacing-2);"></span>
+    </div>
+  </section>
+
+  <!-- QUICK STATS -->
+  <section class="section">
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-calendar-alt"></i> Today's Appointments</div>
+        <div class="stat-value" id="totalAppointments">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-users"></i> In Queue</div>
+        <div class="stat-value" id="queueCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-check-circle"></i> Completed</div>
+        <div class="stat-value" id="completedCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-hourglass-half"></i> In Progress</div>
+        <div class="stat-value" id="inProgressCount">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPOINTMENTS SECTION -->
+  <section class="section">
+    <h2 class="section-title">Today's Appointments</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th><i class="fas fa-user"></i> Patient Name</th>
+            <th><i class="fas fa-clock"></i> Time</th>
+            <th><i class="fas fa-tag"></i> Status</th>
+            <th><i class="fas fa-notes-medical"></i> Description</th>
+            <th><i class="fas fa-cog"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsBody">
+          <tr><td colspan="5" style="text-align: center; padding: var(--spacing-6);"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- QUEUE SECTION -->
+  <section class="section">
+    <h2 class="section-title">Current Queue</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th><i class="fas fa-list-ol"></i> Queue #</th>
+            <th><i class="fas fa-user"></i> Patient Name</th>
+            <th><i class="fas fa-tag"></i> Status</th>
+            <th><i class="fas fa-notes-medical"></i> Description</th>
+            <th><i class="fas fa-cog"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody id="queueBody">
+          <tr><td colspan="5" style="text-align: center; padding: var(--spacing-6);"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PATIENT DETAILS SECTION -->
+  <section class="section">
+    <h2 class="section-title">Patient Management</h2>
+    <div class="card">
+      <div class="form-section">
+        <h3 class="form-section-title">Select Patient</h3>
+        <div class="form-group">
+          <label class="form-label">Patient</label>
+          <select id="patientSelect" onchange="loadPatientDescription()">
+            <option value="">-- Select a patient --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section-title">Visit Description</h3>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea id="descriptionTextarea" placeholder="Clinical notes for this visit..." rows="4"></textarea>
+        </div>
+        <button type="button" class="btn btn-success" onclick="savePatientDescription()"><i class="fas fa-save"></i> Save Description</button>
+      </div>
+
+      <div class="form-section">
+        <h3 class="form-section-title">Medical Record</h3>
+        <div class="form-group">
+          <label class="form-label">Diagnosis</label>
+          <textarea id="diagnosisInput" placeholder="Diagnosis..." rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prescriptions</label>
+          <textarea id="prescriptionInput" placeholder="Prescriptions..." rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clinical Notes</label>
+          <textarea id="notesInput" placeholder="Additional notes..." rows="3"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="saveMedicalRecord()"><i class="fas fa-save"></i> Save Medical Record</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Professional Healthcare Management.</p>
+</footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const doctor = JSON.parse(localStorage.getItem("doctor"));
+const activeDoctorId = doctor?.doctorId || doctor?.id;
+
+if (!doctor) {
+  window.location.href = "doctor-login.html";
+}
+
+if (!activeDoctorId) {
+  alert("Doctor profile incomplete. Please login again.");
+  localStorage.clear();
+  window.location.href = "doctor-login.html";
+}
+
+document.getElementById("doctorName").innerText = `Dr. ${doctor.name} (${doctor.specialization})`;
+
+const appointmentMeta = new Map();
+
+function getDoctorToken() {
+  return localStorage.getItem("doctorToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getDoctorToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+  return fetch(url, { ...options, headers });
+}
+
+function goHome() { window.location.href = "index.html"; }
+function goBack() { window.history.back(); }
+
+async function updateStatus(appointmentId, status) {
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/doctors/appointment/${appointmentId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error("Failed to update status");
+    refreshData();
+  } catch (err) {
+    showNotification("Error updating appointment status", "danger");
+  }
+}
+
+function loadPatientSelect() {
+  const select = document.getElementById("patientSelect");
+  select.innerHTML = '<option value="">-- Select a patient --</option>';
+  appointmentMeta.clear();
+
+  apiFetch(`http://localhost:5000/api/doctors/${activeDoctorId}/appointments/today`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.appointmentId;
+        opt.textContent = p.patientName;
+        appointmentMeta.set(p.appointmentId, p);
+        select.appendChild(opt);
+      });
+    });
+}
+
+function loadPatientDescription() {
+  const appointmentId = document.getElementById("patientSelect").value;
+  if (!appointmentId) {
+    document.getElementById("descriptionTextarea").value = "";
+    document.getElementById("diagnosisInput").value = "";
+    document.getElementById("prescriptionInput").value = "";
+    document.getElementById("notesInput").value = "";
+    return;
+  }
+
+  const apptData = appointmentMeta.get(appointmentId);
+  if (apptData) {
+    document.getElementById("descriptionTextarea").value = apptData.description || "";
+    document.getElementById("diagnosisInput").value = apptData.diagnosis || "";
+    document.getElementById("prescriptionInput").value = apptData.prescriptions || "";
+    document.getElementById("notesInput").value = apptData.notes || "";
+  }
+}
+
+async function savePatientDescription() {
+  const appointmentId = document.getElementById("patientSelect").value;
+  const description = document.getElementById("descriptionTextarea").value.trim();
+
+  if (!appointmentId) {
+    showNotification("Please select a patient", "warning");
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/doctors/appointment/${appointmentId}/description`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description })
+    });
+
+    if (!res.ok) throw new Error("Failed to save");
+    showNotification("Description saved successfully", "success");
+  } catch (err) {
+    showNotification("Error saving description", "danger");
+  }
+}
+
+async function saveMedicalRecord() {
+  const appointmentId = document.getElementById("patientSelect").value;
+  const diagnosis = document.getElementById("diagnosisInput").value.trim();
+  const prescriptions = document.getElementById("prescriptionInput").value.trim();
+  const notes = document.getElementById("notesInput").value.trim();
+
+  if (!appointmentId) {
+    showNotification("Please select a patient", "warning");
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/doctors/appointment/${appointmentId}/medical-record`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ diagnosis, prescriptions, notes })
+    });
+
+    if (!res.ok) throw new Error("Failed to save");
+    showNotification("Medical record saved successfully", "success");
+  } catch (err) {
+    showNotification("Error saving medical record", "danger");
+  }
+}
+
+async function callNextPatient() {
+  try {
+    const res = await apiFetch(`http://localhost:5000/api/doctors/${activeDoctorId}/call-next`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok) {
+      showNotification(`Called: ${data.patientName}`, "info");
+      refreshData();
+    }
+  } catch (err) {
+    showNotification("Error calling next patient", "danger");
+  }
+}
+
+async function refreshData() {
+  try {
+    const [appointmentsRes, queueRes] = await Promise.all([
+      apiFetch(`http://localhost:5000/api/doctors/${activeDoctorId}/appointments/today`),
+      apiFetch(`http://localhost:5000/api/queue?doctorId=${activeDoctorId}`)
+    ]);
+
+    const appointments = await appointmentsRes.json();
+    const queue = await queueRes.json();
+
+    // Update stats
+    let queueCount = 0, completedCount = 0, inProgressCount = 0;
+    let appointmentsHtml = '';
+
+    appointments.forEach(apt => {
+      if (apt.status === 'In Progress') inProgressCount++;
+      if (apt.status === 'Completed') completedCount++;
+
+      appointmentsHtml += `
+        <tr>
+          <td><strong>${apt.patientName}</strong></td>
+          <td>${apt.appointmentTime}</td>
+          <td><span class="table-status status-${apt.status.toLowerCase().replace(' ', '-')}">${apt.status}</span></td>
+          <td>${apt.description || '-'}</td>
+          <td>
+            <div class="table-row-action">
+              <button class="btn btn-secondary btn-sm" onclick="updateStatus(${apt.appointmentId}, 'In Progress')"><i class="fas fa-play"></i> Start</button>
+              <button class="btn btn-success btn-sm" onclick="updateStatus(${apt.appointmentId}, 'Completed')"><i class="fas fa-check"></i> Complete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    if (appointmentsHtml === '') {
+      appointmentsHtml = '<tr><td colspan="5" style="text-align: center; padding: var(--spacing-6);">No appointments today</td></tr>';
+    }
+
+    document.getElementById('appointmentsBody').innerHTML = appointmentsHtml;
+
+    let queueHtml = '';
+    queue.forEach(q => {
+      queueCount++;
+      queueHtml += `
+        <tr>
+          <td><strong>#${q.queueNumber}</strong></td>
+          <td>${q.patientName}</td>
+          <td><span class="table-status status-${q.status.toLowerCase()}">${q.status}</span></td>
+          <td>${q.description || '-'}</td>
+          <td>
+            <button class="btn btn-success btn-sm" onclick="updateStatus(${q.appointmentId}, 'Completed')"><i class="fas fa-check"></i> Complete</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    if (queueHtml === '') {
+      queueHtml = '<tr><td colspan="5" style="text-align: center; padding: var(--spacing-6);">No patients in queue</td></tr>';
+    }
+
+    document.getElementById('queueBody').innerHTML = queueHtml;
+
+    document.getElementById('totalAppointments').textContent = appointments.length;
+    document.getElementById('queueCount').textContent = queueCount;
+    document.getElementById('completedCount').textContent = completedCount;
+    document.getElementById('inProgressCount').textContent = inProgressCount;
+
+    loadPatientSelect();
+    document.getElementById('refreshState').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+  } catch (err) {
+    console.error('Error refreshing data:', err);
+  }
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "doctor-login.html";
+}
+
+function showNotification(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 3000);
+}
+
+// Load data on page load
+refreshData();
+</script>
+</body>
+</html>

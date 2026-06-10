@@ -93,9 +93,9 @@
       <p>View clinic performance statistics.</p>
     </div>
 
-    <div class="card" onclick="toggleDescriptions()">
+    <div class="card" onclick="location.href='patient-descriptions.html'">
       <h3>Patient Descriptions</h3>
-      <p>View and download patient descriptions as PDF.</p>
+      <p>View and download patient consultation descriptions as PDF.</p>
     </div>
 
     <div class="card" onclick="location.href='system-settings.html'">
@@ -309,19 +309,32 @@ function loadQueueList() {
       if (data.length === 0) {
         ul.innerHTML = "<li>No patients in queue</li>";
       } else {
-        data.forEach(patient => {
+        ul.innerHTML = data.map(patient => {
           const queueNo = patient.queue_number ?? patient.queueNumber ?? "-";
           const patientName = patient.patient_name || patient.patientName || "Unknown Patient";
           const icNumber = patient.ic_number || patient.icNumber || "-";
           const doctorName = patient.doctor_name || patient.doctorName || "Not assigned";
           const status = patient.status || "-";
+          const statusClass = String(status).toLowerCase().replace(/\s+/g, '-');
 
-          ul.innerHTML += `
-            <li style="padding:10px 0;border-bottom:1px solid #eee;">
-              <strong>#${queueNo}</strong> - <strong>${patientName}</strong> (${icNumber}) - Dr. ${doctorName} - ${status}
+          return `
+            <li class="queue-card">
+              <div class="queue-card__main">
+                <div class="queue-card__heading">
+                  <span class="queue-card__number">#${queueNo}</span>
+                  <span class="queue-card__patient">${patientName}</span>
+                </div>
+                <div class="queue-card__meta">
+                  <span>IC: ${icNumber}</span>
+                  <span>Doctor: Dr. ${doctorName}</span>
+                </div>
+              </div>
+              <div style="text-align:right;min-width:200px;">
+                <div class="queue-status-pill ${statusClass}">${status}</div>
+              </div>
             </li>
           `;
-        });
+        }).join('');
       }
     })
     .catch(err => {

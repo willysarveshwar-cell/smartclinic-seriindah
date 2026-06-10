@@ -33,6 +33,7 @@ app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/queue", require("./routes/queue"));
 app.use("/api/patients", require("./routes/patients"));
 app.use("/api/notifications", require("./routes/notifications"));
+app.use("/api/chat", require("./routes/chat"));
 
 // Test route
 app.get("/", (req, res) => {

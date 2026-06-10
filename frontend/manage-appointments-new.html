@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Manage Appointments | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    .appointments-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-8);
+    }
+
+    .appointments-table thead {
+      background: var(--surface-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .appointments-table th {
+      padding: var(--spacing-4);
+      text-align: left;
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .appointments-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.2s ease;
+    }
+
+    .appointments-table tbody tr:hover {
+      background-color: var(--surface-secondary);
+    }
+
+    .appointments-table td {
+      padding: var(--spacing-4);
+      color: var(--text-primary);
+      font-size: var(--text-sm);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-1);
+      padding: var(--spacing-1) var(--spacing-3);
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: var(--font-medium);
+      text-transform: uppercase;
+    }
+
+    .status-pending { background: var(--warning-bg); color: var(--warning); }
+    .status-confirmed { background: var(--info-bg); color: var(--info); }
+    .status-completed { background: var(--success-bg); color: var(--success); }
+    .status-cancelled { background: var(--danger-bg); color: var(--danger); }
+    .status-no-show { background: var(--danger-bg); color: var(--danger); }
+
+    .filter-section {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-6);
+      border: 1px solid var(--border);
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-4);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .filter-select {
+      padding: var(--spacing-3) var(--spacing-4);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      background: var(--surface);
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: var(--spacing-4);
+      margin-bottom: var(--spacing-6);
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--surface-secondary);
+      padding: var(--spacing-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      color: var(--primary);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .stat-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-2);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-12);
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: var(--spacing-4);
+      opacity: 0.5;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--spacing-2);
+      margin-top: var(--spacing-6);
+      flex-wrap: wrap;
+    }
+
+    .pagination-btn {
+      padding: var(--spacing-2) var(--spacing-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--surface-secondary);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .appointments-table {
+        font-size: var(--text-xs);
+      }
+
+      .appointments-table th,
+      .appointments-table td {
+        padding: var(--spacing-2) var(--spacing-3);
+      }
+
+      .action-buttons {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Appointment Management</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button class="btn btn-text" onclick="goPatients()"><i class="fas fa-users"></i> Patients</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Appointment Management</h1>
+    <p class="page-description">View, reschedule, and manage all clinic appointments</p>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value" id="totalAppointments">0</div>
+      <p class="stat-label">Total Appointments</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="todayAppointments">0</div>
+      <p class="stat-label">Today's Appointments</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="pendingAppointments">0</div>
+      <p class="stat-label">Pending</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="completedAppointments">0</div>
+      <p class="stat-label">Completed Today</p>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-section">
+    <h3 style="margin-bottom: var(--spacing-4);"><i class="fas fa-filter"></i> Filter Appointments</h3>
+    <div class="filter-grid">
+      <div class="form-group">
+        <label class="form-label">Date From</label>
+        <input id="dateFrom" type="date" class="filter-select">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date To</label>
+        <input id="dateTo" type="date" class="filter-select">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="statusFilter" class="filter-select">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+          <option value="No Show">No Show</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Doctor</label>
+        <input id="doctorFilter" type="text" placeholder="Search doctor name..." class="filter-select">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Patient</label>
+        <input id="patientFilter" type="text" placeholder="Search patient name..." class="filter-select">
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-3); align-items: flex-end;">
+        <button class="btn btn-primary" onclick="loadAppointments(1)">
+          <i class="fas fa-search"></i> Search
+        </button>
+        <button class="btn btn-secondary" onclick="clearFilters()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPOINTMENTS TABLE -->
+  <div id="appointmentsContainer">
+    <div class="empty-state">
+      <i class="fas fa-calendar-check"></i>
+      <h3>No appointments found</h3>
+      <p>All appointments will appear here</p>
+    </div>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="pagination" id="pagination" style="display: none;"></div>
+</main>
+
+<!-- EDIT APPOINTMENT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-edit"></i> Edit Appointment</h3>
+      <button class="modal-close" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Appointment Date</label>
+        <input id="editDate" type="date" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Appointment Time</label>
+        <input id="editTime" type="time" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="editStatus" required>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+          <option value="No Show">No Show</option>
+        </select>
+      </div>
+
+      <div id="editError" style="color: var(--danger); margin-top: var(--spacing-4); display: none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Professional appointment management system.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+let currentPage = 1;
+let currentEditId = null;
+
+function token() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function authHeaders() {
+  return { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` };
+}
+
+function requireAdminLogin() {
+  if (!token()) {
+    showMessage("Admin login required. Redirecting to login page.", "warning");
+    setTimeout(() => window.location.href = "admin-login.html", 2000);
+    return false;
+  }
+  return true;
+}
+
+async function loadAppointments(page = 1) {
+  if (!requireAdminLogin()) return;
+
+  currentPage = page;
+  const dateFrom = document.getElementById("dateFrom").value;
+  const dateTo = document.getElementById("dateTo").value;
+  const status = document.getElementById("statusFilter").value;
+  const doctor = document.getElementById("doctorFilter").value;
+  const patient = document.getElementById("patientFilter").value;
+
+  const params = new URLSearchParams({ page, limit: 15 });
+  if (dateFrom) params.set("date_from", dateFrom);
+  if (dateTo) params.set("date_to", dateTo);
+  if (status) params.set("status", status);
+  if (doctor) params.set("doctor", doctor);
+  if (patient) params.set("patient", patient);
+
+  const container = document.getElementById("appointmentsContainer");
+  container.innerHTML = '<div style="text-align: center; padding: var(--spacing-8);"><i class="fas fa-spinner fa-spin"></i> Loading appointments...</div>';
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments?${params}`, { headers: authHeaders() });
+
+    if (res.status === 401 || res.status === 403) {
+      container.innerHTML = '<div class="alert alert-danger"><div class="alert-content"><p>Session expired. Please log in again.</p></div></div>';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      container.innerHTML = `<div class="alert alert-danger"><div class="alert-content"><p>${data.message || 'Failed to load appointments'}</p></div></div>`;
+      return;
+    }
+
+    updateStats(data.stats || {});
+    renderAppointments(data.appointments || []);
+    renderPagination(data.total || 0, data.page || 1, data.limit || 15);
+  } catch (err) {
+    console.error("Error loading appointments:", err);
+    container.innerHTML = '<div class="alert alert-danger"><div class="alert-content"><p>Failed to load appointments. Please try again.</p></div></div>';
+  }
+}
+
+function updateStats(stats) {
+  document.getElementById("totalAppointments").textContent = stats.total || 0;
+  document.getElementById("todayAppointments").textContent = stats.today || 0;
+  document.getElementById("pendingAppointments").textContent = stats.pending || 0;
+  document.getElementById("completedAppointments").textContent = stats.completed || 0;
+}
+
+function renderAppointments(appointments) {
+  const container = document.getElementById("appointmentsContainer");
+
+  if (appointments.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-calendar-check"></i>
+        <h3>No appointments found</h3>
+        <p>${document.getElementById("patientFilter").value || document.getElementById("statusFilter").value ? "Try adjusting your filters" : "All appointments will appear here"}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const table = `
+    <table class="appointments-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Specialization</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Queue #</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${appointments.map(appt => `
+          <tr>
+            <td>#${appt.appointmentId}</td>
+            <td>${escapeHtml(appt.patientName || 'N/A')}</td>
+            <td>${escapeHtml(appt.doctorName || 'N/A')}</td>
+            <td>${escapeHtml(appt.specialization || 'N/A')}</td>
+            <td>${appt.appointmentDate}</td>
+            <td>${appt.appointmentTime}</td>
+            <td><span class="status-badge status-${appt.status.toLowerCase().replace(' ', '-')}">${appt.status}</span></td>
+            <td>${appt.queueNumber || '—'}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-secondary btn-xs" onclick="editAppointment(${appt.appointmentId})">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-danger btn-xs" onclick="deleteAppointment(${appt.appointmentId}, '${escapeHtml(appt.patientName)}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  container.innerHTML = table;
+}
+
+function renderPagination(total, page, limit) {
+  const totalPages = Math.ceil(total / limit);
+  const el = document.getElementById("pagination");
+
+  if (totalPages <= 1) {
+    el.style.display = "none";
+    return;
+  }
+
+  el.style.display = "flex";
+  el.innerHTML = `
+    <button class="pagination-btn" onclick="loadAppointments(${page - 1})" ${page <= 1 ? "disabled" : ""}>
+      <i class="fas fa-chevron-left"></i> Previous
+    </button>
+    <span style="font-size: var(--text-sm); color: var(--text-secondary); margin: 0 var(--spacing-4);">
+      Page ${page} of ${totalPages} (${total} total)
+    </span>
+    <button class="pagination-btn" onclick="loadAppointments(${page + 1})" ${page >= totalPages ? "disabled" : ""}>
+      Next <i class="fas fa-chevron-right"></i>
+    </button>
+  `;
+}
+
+async function editAppointment(id) {
+  if (!requireAdminLogin()) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments/${id}`, { headers: authHeaders() });
+    const appt = await res.json();
+
+    if (!res.ok) {
+      showMessage("Failed to load appointment details", "danger");
+      return;
+    }
+
+    document.getElementById("editDate").value = appt.appointmentDate;
+    document.getElementById("editTime").value = appt.appointmentTime;
+    document.getElementById("editStatus").value = appt.status;
+    document.getElementById("editError").style.display = "none";
+
+    currentEditId = id;
+    document.getElementById("editModal").classList.add("active");
+  } catch (err) {
+    console.error("Error loading appointment:", err);
+    showMessage("Error loading appointment details", "danger");
+  }
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").classList.remove("active");
+  currentEditId = null;
+}
+
+async function saveEdit() {
+  if (!currentEditId) return;
+
+  const date = document.getElementById("editDate").value;
+  const time = document.getElementById("editTime").value;
+  const status = document.getElementById("editStatus").value;
+  const errEl = document.getElementById("editError");
+
+  if (!date || !time || !status) {
+    errEl.textContent = "All fields are required.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments/${currentEditId}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify({ appointmentDate: date, appointmentTime: time, status: status })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.message || "Failed to update appointment";
+      errEl.style.display = "block";
+      return;
+    }
+
+    showMessage("Appointment updated successfully!", "success");
+    closeEditModal();
+    loadAppointments(currentPage);
+  } catch (err) {
+    console.error("Error:", err);
+    errEl.textContent = "Network error. Please try again.";
+    errEl.style.display = "block";
+  }
+}
+
+async function deleteAppointment(id, patientName) {
+  if (!requireAdminLogin()) return;
+
+  if (!confirm(`Are you sure you want to delete the appointment for "${patientName}"?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments/${id}`, {
+      method: "DELETE",
+      headers: authHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(data.message || "Failed to delete appointment", "danger");
+      return;
+    }
+
+    showMessage("Appointment deleted successfully!", "success");
+    loadAppointments(currentPage);
+  } catch (err) {
+    console.error("Error:", err);
+    showMessage("Network error. Please try again.", "danger");
+  }
+}
+
+function clearFilters() {
+  document.getElementById("dateFrom").value = "";
+  document.getElementById("dateTo").value = "";
+  document.getElementById("statusFilter").value = "";
+  document.getElementById("doctorFilter").value = "";
+  document.getElementById("patientFilter").value = "";
+  loadAppointments(1);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showMessage(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 4000);
+}
+
+// Load appointments on page load
+loadAppointments(1);
+</script>
+</body>
+</html>

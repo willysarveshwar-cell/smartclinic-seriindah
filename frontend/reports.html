@@ -5,135 +5,454 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f766e">
   <title>Reports | Smart Clinic</title>
   <link rel="stylesheet" href="dist/app.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Page Banner ───────────────────────────────────────── */
+    .rpt-banner {
+      background: linear-gradient(135deg, #0d9488 0%, #0f766e 60%, #115e59 100%);
+      color: #fff;
+      padding: 28px 32px;
+      border-radius: 16px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .rpt-banner-left { display:flex; align-items:center; gap:16px; }
+    .rpt-banner-icon {
+      width: 56px; height: 56px; flex-shrink: 0;
+      background: rgba(255,255,255,.18);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+    }
+    .rpt-banner h1 { margin:0; font-size:1.5rem; font-weight:700; }
+    .rpt-banner p  { margin:4px 0 0; font-size:.88rem; opacity:.82; }
+    .rpt-banner-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .rpt-dl-btn {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 18px; border-radius:10px;
+      font-size:.88rem; font-weight:600; font-family:inherit;
+      cursor:pointer; border:none; transition:all .15s;
+    }
+    .rpt-dl-btn.pdf  { background:rgba(255,255,255,.22); color:#fff; }
+    .rpt-dl-btn.pdf:hover  { background:rgba(255,255,255,.32); }
+    .rpt-dl-btn.xlsx { background:rgba(255,255,255,.1); color:rgba(255,255,255,.85); border:1px solid rgba(255,255,255,.3); }
+    .rpt-dl-btn.xlsx:hover { background:rgba(255,255,255,.2); }
+
+    /* ── Period Selector ────────────────────────────────────── */
+    .rpt-controls {
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:24px;
+    }
+    .rpt-period-group {
+      display:flex; gap:0; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;
+    }
+    .rpt-period-btn {
+      padding:8px 18px; background:#f8fafc; color:#64748b;
+      border:none; font-size:.85rem; font-weight:600; font-family:inherit;
+      cursor:pointer; transition:background .12s, color .12s;
+      border-right:1px solid #e2e8f0;
+    }
+    .rpt-period-btn:last-child { border-right:none; }
+    .rpt-period-btn.active { background:linear-gradient(135deg,#0d9488,#0f766e); color:#fff; }
+    .rpt-last-update {
+      margin-left:auto; font-size:.82rem; color:#94a3b8;
+      display:flex; align-items:center; gap:6px;
+    }
+
+    /* ── KPI Cards ──────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .kpi-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.09); }
+    .kpi-icon {
+      width: 50px; height: 50px; flex-shrink: 0;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; color: #fff; overflow: hidden; line-height: 1;
+    }
+    .kpi-icon.teal   { background: linear-gradient(135deg,#0d9488,#0f766e); }
+    .kpi-icon.green  { background: linear-gradient(135deg,#065f46,#059669); }
+    .kpi-icon.blue   { background: linear-gradient(135deg,#1d4ed8,#3b82f6); }
+    .kpi-icon.amber  { background: linear-gradient(135deg,#92400e,#d97706); }
+    .kpi-body { min-width:0; }
+    .kpi-val  { font-size:1.9rem; font-weight:800; line-height:1; color:#0f172a; }
+    .kpi-lbl  { font-size:.78rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
+    .kpi-sub  { font-size:.78rem; color:#94a3b8; margin-top:3px; }
+
+    /* ── Chart Layout ────────────────────────────────────────── */
+    .chart-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .chart-row-2 { grid-template-columns: 1fr; } }
+
+    .chart-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .chart-head {
+      padding: 18px 24px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center;
+      background: #fafcfd;
+    }
+    .chart-head-icon {
+      width: 34px; height: 34px; flex-shrink: 0;
+      background: linear-gradient(135deg,#0d9488,#0f766e);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .85rem; margin-right: 12px;
+    }
+    .chart-head h3 { margin:0; font-size:.95rem; font-weight:700; color:#0f172a; }
+    .chart-head p  { margin:2px 0 0; font-size:.78rem; color:#94a3b8; }
+    .chart-body    { padding: 20px 24px; }
+    .chart-body.tall  { height: 380px; }
+    .chart-body.short { height: 300px; }
+    .chart-body canvas { width:100%!important; height:100%!important; }
+
+    .rpt-empty {
+      text-align:center; padding:48px 24px; color:#94a3b8;
+    }
+    .rpt-empty i { font-size:2.2rem; display:block; margin-bottom:10px; }
+  </style>
 </head>
 <body>
 
 <div class="navbar">
-  <h2>Reports</h2>
-  <button onclick="back()">Back</button>
-</div>
-
-<div class="dashboard-container">
-  <div class="card">
-    <h3>System Reports</h3>
-    <div class="flex-actions">
-      <button class="primary" onclick="downloadReport('pdf')">Download PDF</button>
-      <button class="primary" onclick="downloadReport('excel')">Download Excel</button>
-    </div>
-    <canvas id="dailyChart" height="120"></canvas>
-    <canvas id="statusChart" height="120" style="margin-top:20px;"></canvas>
+  <h2><i class="fas fa-chart-bar" style="margin-right:8px;opacity:.85;"></i>Reports</h2>
+  <div>
+    <button onclick="window.location.href='admin-dashboard.html'">Back</button>
   </div>
 </div>
 
+<div class="dashboard-container">
+
+  <!-- Banner -->
+  <div class="rpt-banner">
+    <div class="rpt-banner-left">
+      <div class="rpt-banner-icon"><i class="fas fa-chart-line"></i></div>
+      <div>
+        <h1>System Reports &amp; Analytics</h1>
+        <p>Real-time insights into clinic appointments, patient flow, and follow-up trends</p>
+      </div>
+    </div>
+    <div class="rpt-banner-actions">
+      <button class="rpt-dl-btn pdf" onclick="downloadReport('pdf')">
+        <i class="fas fa-file-pdf"></i> Download PDF
+      </button>
+      <button class="rpt-dl-btn xlsx" onclick="downloadReport('excel')">
+        <i class="fas fa-file-excel"></i> Download Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Period selector + refresh -->
+  <div class="rpt-controls">
+    <span style="font-size:.85rem;font-weight:600;color:#475569;">Show last:</span>
+    <div class="rpt-period-group">
+      <button class="rpt-period-btn" data-days="3"  onclick="setPeriod(3)">3 days</button>
+      <button class="rpt-period-btn active" data-days="7"  onclick="setPeriod(7)">7 days</button>
+      <button class="rpt-period-btn" data-days="14" onclick="setPeriod(14)">14 days</button>
+      <button class="rpt-period-btn" data-days="30" onclick="setPeriod(30)">30 days</button>
+    </div>
+    <button class="primary" style="padding:8px 16px;font-size:.85rem;width:auto;margin-top:0;"
+            onclick="loadAnalytics()">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+    <div class="rpt-last-update">
+      <i class="fas fa-clock"></i>&nbsp;Updated: <strong id="lastUpdate">—</strong>
+    </div>
+  </div>
+
+  <!-- KPI Summary Row -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon teal"><i class="fas fa-calendar-check"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-val" id="kpiTotal">—</div>
+        <div class="kpi-lbl">Total Appointments</div>
+        <div class="kpi-sub" id="kpiPeriodLabel">last 7 days</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-val" id="kpiCompleted">—</div>
+        <div class="kpi-lbl">Completed</div>
+        <div class="kpi-sub">successfully served</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="fas fa-redo-alt"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-val" id="kpiFollowup">—</div>
+        <div class="kpi-lbl">Follow-ups</div>
+        <div class="kpi-sub">returning patients</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon amber"><i class="fas fa-times-circle"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-val" id="kpiCancelled">—</div>
+        <div class="kpi-lbl">Cancelled</div>
+        <div class="kpi-sub">not attended</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main bar chart: daily appointments -->
+  <div class="chart-card">
+    <div class="chart-head">
+      <div class="chart-head-icon"><i class="fas fa-chart-bar"></i></div>
+      <div>
+        <h3>Daily Appointments &amp; Follow-ups</h3>
+        <p>Appointments booked per day vs returning (follow-up) patients</p>
+      </div>
+    </div>
+    <div class="chart-body tall" id="dailyChartWrap">
+      <canvas id="dailyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Two side-by-side charts -->
+  <div class="chart-row-2">
+
+    <div class="chart-card" style="margin-bottom:0;">
+      <div class="chart-head">
+        <div class="chart-head-icon"><i class="fas fa-chart-line"></i></div>
+        <div>
+          <h3>Follow-up Trend</h3>
+          <p>Returning patient visits over time</p>
+        </div>
+      </div>
+      <div class="chart-body short" id="followupChartWrap">
+        <canvas id="followupChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:0;">
+      <div class="chart-head">
+        <div class="chart-head-icon"><i class="fas fa-chart-pie"></i></div>
+        <div>
+          <h3>Appointments by Status</h3>
+          <p>Breakdown across all appointment statuses</p>
+        </div>
+      </div>
+      <div class="chart-body short" id="statusChartWrap">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
 <script>
-function back() {
-  window.location.href = "admin-dashboard.html";
+let currentDays = 7;
+const ci = {};
+
+function getAdminToken() { return localStorage.getItem("adminToken") || ""; }
+
+function authH(ct) {
+  const h = {};
+  const t = getAdminToken();
+  if (t) h.Authorization = "Bearer " + t;
+  if (ct) h["Content-Type"] = ct;
+  return h;
 }
 
-function getAdminToken() {
-  return localStorage.getItem("adminToken") || "";
+function setPeriod(days) {
+  currentDays = days;
+  document.querySelectorAll(".rpt-period-btn").forEach(b =>
+    b.classList.toggle("active", +b.dataset.days === days));
+  const lbl = document.getElementById("kpiPeriodLabel");
+  if (lbl) lbl.textContent = "last " + days + " days";
+  loadAnalytics();
 }
 
-function authHeaders(contentType = "application/json") {
-  const headers = {};
-  const token = getAdminToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  if (contentType) headers["Content-Type"] = contentType;
-  return headers;
+function destroyChart(id) {
+  if (ci[id]) { ci[id].destroy(); delete ci[id]; }
 }
 
-async function apiFetch(url, options = {}) {
-  return fetch(url, { ...options, headers: { ...(options.headers || {}), ...authHeaders(options.headers ? null : "application/json") } });
-}
+const FONT   = "'Plus Jakarta Sans', sans-serif";
+const TEAL   = "rgba(13,148,136,0.88)";
+const TEAL_F = "rgba(13,148,136,0.13)";
+const RED    = "rgba(220,53,69,0.85)";
+const RED_F  = "rgba(220,53,69,0.12)";
+const STC    = ["#d97706","#3b82f6","#059669","#dc2626","#8b5cf6"];
+
+const BASE_OPTS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: "top",
+      labels: { padding:16, usePointStyle:true, pointStyleWidth:10,
+                font:{ family:FONT, size:12, weight:"600" } }
+    },
+    tooltip: {
+      backgroundColor:"#0f172a",
+      titleFont:{ family:FONT, size:12, weight:"700" },
+      bodyFont: { family:FONT, size:12 },
+      padding:10, cornerRadius:8
+    }
+  },
+  scales: {
+    x: { grid:{ color:"rgba(0,0,0,.04)" },
+         ticks:{ font:{ family:FONT, size:11 } } },
+    y: { beginAtZero:true,
+         ticks:{ precision:0, font:{ family:FONT, size:11 } },
+         grid:{ color:"rgba(0,0,0,.05)" } }
+  }
+};
 
 async function downloadReport(format) {
-  if (!getAdminToken()) {
-    window.location.href = "admin.html";
-    return;
-  }
-
+  if (!getAdminToken()) { window.location.href = "admin.html"; return; }
   try {
-    const res = await apiFetch(`http://localhost:5000/api/admin/reports/export?format=${format}`, { method: "GET" });
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.message || "Failed to download report");
-    }
+    const res = await fetch(
+      "http://localhost:5000/api/admin/reports/export?format=" + format,
+      { headers: authH(null) });
+    if (!res.ok) throw new Error((await res.json()).message || "Download failed");
     const blob = await res.blob();
-    const extension = format === "pdf" ? "pdf" : "xlsx";
-    const filename = `smart-clinic-report.${extension}`;
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    alert(`Report download failed: ${error.message}`);
-  }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "smart-clinic-report." + (format === "pdf" ? "pdf" : "xlsx");
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+  } catch (e) { alert("Report download failed: " + e.message); }
 }
 
 async function loadAnalytics() {
-  if (!getAdminToken()) {
-    window.location.href = "admin.html";
-    return;
+  if (!getAdminToken()) { window.location.href = "admin.html"; return; }
+  try {
+    const [aRes, fRes] = await Promise.all([
+      fetch("http://localhost:5000/api/admin/analytics?days=" + currentDays, { headers: authH(null) }),
+      fetch("http://localhost:5000/api/admin/reports/followups?days=" + currentDays, { headers: authH(null) })
+    ]);
+    if (aRes.status === 401 || aRes.status === 403) { window.location.href = "admin.html"; return; }
+    if (!aRes.ok) throw new Error("Failed to load analytics");
+
+    const analytics = await aRes.json();
+    const followups = fRes.ok ? await fRes.json() : [];
+
+    const labels   = (analytics.appointmentsByDate || []).map(i => i.date);
+    const apptVals = (analytics.appointmentsByDate || []).map(i => i.total);
+    const fuMap    = new Map((followups || []).map(i => [i.date, i.total]));
+    const fuVals   = labels.map(d => fuMap.get(d) || 0);
+    const statuses = analytics.appointmentsByStatus || [];
+
+    const totalAppts   = apptVals.reduce((a,b) => a+b, 0);
+    const totalFu      = fuVals.reduce((a,b) => a+b, 0);
+    const completedRow = statuses.find(s => s.status === "Completed");
+    const cancelledRow = statuses.find(s => s.status === "Cancelled");
+
+    document.getElementById("kpiTotal").textContent     = totalAppts;
+    document.getElementById("kpiCompleted").textContent = completedRow ? completedRow.total : 0;
+    document.getElementById("kpiFollowup").textContent  = totalFu;
+    document.getElementById("kpiCancelled").textContent = cancelledRow ? cancelledRow.total : 0;
+    document.getElementById("lastUpdate").textContent   = new Date().toLocaleTimeString();
+
+    // Main bar chart
+    destroyChart("dailyChart");
+    const dw = document.getElementById("dailyChartWrap");
+    dw.innerHTML = "<canvas id='dailyChart'></canvas>";
+    ci["dailyChart"] = new Chart(document.getElementById("dailyChart"), {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label:"Appointments", data:apptVals,
+            backgroundColor:TEAL, borderRadius:6, borderSkipped:false },
+          { label:"Follow-ups",   data:fuVals,
+            backgroundColor:RED,  borderRadius:6, borderSkipped:false }
+        ]
+      },
+      options: BASE_OPTS
+    });
+
+    // Followup trend line
+    destroyChart("followupChart");
+    const fw = document.getElementById("followupChartWrap");
+    fw.innerHTML = "<canvas id='followupChart'></canvas>";
+    ci["followupChart"] = new Chart(document.getElementById("followupChart"), {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label:"Follow-up Patients", data:fuVals,
+          borderColor:RED, backgroundColor:RED_F,
+          fill:true, tension:0.4, pointRadius:4, pointBackgroundColor:RED
+        }]
+      },
+      options: BASE_OPTS
+    });
+
+    // Status doughnut
+    destroyChart("statusChart");
+    const sw = document.getElementById("statusChartWrap");
+    sw.innerHTML = "<canvas id='statusChart'></canvas>";
+    ci["statusChart"] = new Chart(document.getElementById("statusChart"), {
+      type: "doughnut",
+      data: {
+        labels: statuses.map(s => s.status),
+        datasets: [{
+          data: statuses.map(s => s.total),
+          backgroundColor: STC.slice(0, statuses.length),
+          borderWidth: 3, borderColor: "#fff", hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: "62%",
+        plugins: {
+          legend: { position:"bottom",
+            labels: { padding:14, usePointStyle:true, pointStyleWidth:10,
+                      font:{ family:FONT, size:11, weight:"600" } } },
+          tooltip: BASE_OPTS.plugins.tooltip
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error("Analytics error:", err);
+    ["kpiTotal","kpiCompleted","kpiFollowup","kpiCancelled"].forEach(id => {
+      document.getElementById(id).textContent = "—";
+    });
+    ["dailyChartWrap","followupChartWrap","statusChartWrap"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<div class="rpt-empty"><i class="fas fa-exclamation-triangle"></i><p>Failed to load data. Check backend.</p></div>';
+    });
   }
-
-  const res = await apiFetch("http://localhost:5000/api/admin/analytics?days=7", { method: "GET" });
-  if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
-      window.location.href = "admin.html";
-      return;
-    }
-    const err = await res.json();
-    throw new Error(err.message || "Failed to load analytics");
-  }
-  const data = await res.json();
-
-  const labels = data.appointmentsByDate.map(item => item.date);
-  const values = data.appointmentsByDate.map(item => item.total);
-
-  new Chart(document.getElementById("dailyChart"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Appointments per day",
-        data: values,
-        borderColor: "#0a58ca",
-        backgroundColor: "rgba(10,88,202,0.12)",
-        fill: true,
-        tension: 0.3
-      }]
-    }
-  });
-
-  new Chart(document.getElementById("statusChart"), {
-    type: "bar",
-    data: {
-      labels: data.appointmentsByStatus.map(item => item.status),
-      datasets: [{
-        label: "Appointments by status",
-        data: data.appointmentsByStatus.map(item => item.total),
-        backgroundColor: ["#ffc107", "#17a2b8", "#28a745", "#dc3545"]
-      }]
-    }
-  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (!getAdminToken()) {
-    window.location.href = "admin.html";
-    return;
-  }
+  if (!getAdminToken()) { window.location.href = "admin.html"; return; }
   loadAnalytics();
 });
 </script>

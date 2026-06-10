@@ -40,8 +40,9 @@ function generateSlots(startTime, endTime) {
 }
 
 function isValidDefaultClinicSlot(time) {
-  const defaultSlots = generateSlots("09:00", "17:00");
-  return defaultSlots.includes(String(time || "").slice(0, 5));
+  const normalized = String(time || "").slice(0, 5);
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(normalized);
+  return Boolean(match);
 }
 
 async function validateDoctorAvailability(doctorId, appointmentDate, appointmentTime) {
@@ -286,6 +287,105 @@ router.get("/slots", async (req, res) => {
   } catch (error) {
     console.error("Load slots error:", error.message);
     res.status(500).json({ message: "Failed to load slots" });
+  }
+});
+
+router.get("/available-slots", async (req, res) => {
+  try {
+    const doctorId = req.query.doctor_id || req.query.doctorId;
+    const { date } = req.query;
+    if (!doctorId || !date) {
+      return res.status(400).json({ message: "doctor_id and date are required" });
+    }
+
+    const jsDate = new Date(`${date}T00:00:00`);
+    if (Number.isNaN(jsDate.getTime())) {
+      return res.status(400).json({ message: "Invalid date format" });
+    }
+
+    const leaveRows = await db.queryAsync(
+      `SELECT id
+       FROM doctor_leaves
+       WHERE doctor_id = ?
+         AND status = 'Approved'
+         AND ? BETWEEN start_date AND end_date
+       LIMIT 1`,
+      [doctorId, date]
+    );
+
+    if (leaveRows.length > 0) {
+      return res.json({ doctor_id: Number(doctorId), date, slots: [], leave: true });
+    }
+
+    const dayOfWeek = jsDate.getDay();
+    const availability = await db.queryAsync(
+      `SELECT start_time, end_time
+       FROM doctor_availability
+       WHERE doctor_id = ? AND day_of_week = ? AND is_active = 1
+       ORDER BY start_time ASC`,
+      [doctorId, dayOfWeek]
+    );
+
+    const allSlots = availability.length > 0
+      ? availability.flatMap((row) => generateSlots(String(row.start_time).slice(0, 5), String(row.end_time).slice(0, 5)))
+      : generateSlots("00:00", "24:00");
+
+    const booked = await db.queryAsync(
+      `SELECT appointment_time FROM appointments
+       WHERE doctor_id = ? AND appointment_date = ? AND status != 'Cancelled'`,
+      [doctorId, date]
+    );
+
+    const bookedSet = new Set(booked.map((item) => item.appointment_time.slice(0, 5)));
+
+    const slots = allSlots.map((slot) => ({
+      time: slot,
+      available: !bookedSet.has(slot)
+    }));
+
+    res.json({ doctor_id: Number(doctorId), date, slots });
+  } catch (error) {
+    console.error("Load slots error:", error.message);
+    res.status(500).json({ message: "Failed to load slots" });
+  }
+});
+
+router.put("/:id/followup", authenticate, requireRole("Doctor", "Admin"), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const followUp = Boolean(req.body.follow_up);
+
+    const rows = await db.queryAsync("SELECT id, ic_number, patient_id FROM appointments WHERE id = ? LIMIT 1", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    await db.queryAsync(
+      "UPDATE appointments SET follow_up = ?, updated_at = NOW() WHERE id = ?",
+      [followUp ? 1 : 0, id]
+    );
+
+    if (rows[0].patient_id) {
+      await db.queryAsync(
+        `UPDATE patients SET needs_follow_up = ?
+         WHERE id = ?`,
+        [followUp ? 1 : 0, rows[0].patient_id]
+      );
+    }
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("patients:updated", {
+        patientId: rows[0].patient_id,
+        appointmentId: id,
+        follow_up: followUp
+      });
+    }
+
+    return res.json({ message: "Follow-up status updated", follow_up: followUp });
+  } catch (error) {
+    console.error("Update follow-up error:", error.message);
+    return res.status(500).json({ message: "Failed to update follow-up status" });
   }
 });
 

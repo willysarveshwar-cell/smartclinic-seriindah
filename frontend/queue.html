@@ -15,21 +15,21 @@
 <body>
 
 <header class="navbar">
-  <h2>Smart Clinic</h2>
-  <nav>
+  <h2>Live Queue</h2>
+  <nav style="display: flex; gap: 10px; align-items: center;">
     <button type="button" onclick="goHome()">Home</button>
-    <button type="button" onclick="goBack()">Back</button>
     <button type="button" onclick="goAppointment()">Book Appointment</button>
+    <button type="button" onclick="goBack()">Back</button>
   </nav>
 </header>
 
-<main class="queue-layout">
-  <header class="page-head">
+<main class="queue-layout" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  <header class="page-head" style="text-align: center; margin-bottom: 30px;">
     <h1 class="page-title">Live Queue Status</h1>
     <p class="lead">Real-time patient queue for today. Refreshes automatically.</p>
   </header>
 
-  <div id="queueSummary" class="queue-summary"></div>
+  <div id="queueSummary" class="queue-summary" style="justify-content: center; margin-bottom: 30px;"></div>
 
   <div class="table-scroll">
     <table id="queueTable" class="table-live">
@@ -142,5 +142,6 @@
     socket.on("queue:updated", loadQueue);
   }
 </script>
+<script src="chatbot.js"></script>
 </body>
 </html>

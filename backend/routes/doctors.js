@@ -303,6 +303,28 @@ router.get("/:doctorId/availability", authenticate, requireRole("Doctor", "Admin
   }
 });
 
+// Return stored weekly availability patterns for a doctor
+router.get('/:doctorId/availability/weekly', authenticate, requireRole('Doctor', 'Admin'), async (req, res) => {
+  try {
+    const doctorId = parseInt(req.params.doctorId, 10);
+    const scopeError = ensureDoctorScope(req, doctorId);
+    if (scopeError) return res.status(scopeError.code).json(scopeError.body);
+
+    const rows = await db.queryAsync(
+      `SELECT day_of_week, start_time, end_time, is_active
+       FROM doctor_availability
+       WHERE doctor_id = ?
+       ORDER BY day_of_week ASC, start_time ASC`,
+      [doctorId]
+    );
+
+    return res.json(rows);
+  } catch (error) {
+    console.error('Get weekly availability error:', error.message);
+    return res.status(500).json({ message: 'Failed to load weekly availability' });
+  }
+});
+
 router.put("/:doctorId/availability", authenticate, requireRole("Doctor", "Admin"), async (req, res) => {
   try {
     const doctorId = parseInt(req.params.doctorId, 10);

@@ -10,62 +10,180 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f766e">
   <title>Patient Portal | Smart Clinic</title>
-  <link rel="stylesheet" href="dist/app.css">
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary-50) 0%, var(--slate-50) 100%);
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-8);
+      margin: 0;
+      margin-top: var(--navbar-height);
+    }
+    
+    .auth-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-8);
+      width: 100%;
+      max-width: 900px;
+      
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+        padding: 0 var(--spacing-4);
+      }
+    }
+    
+    .auth-card {
+      background: var(--surface);
+      padding: var(--spacing-8);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      
+      @media (max-width: 768px) {
+        padding: var(--spacing-6);
+      }
+    }
+    
+    .auth-card h2 {
+      font-size: var(--text-2xl);
+      margin-bottom: var(--spacing-6);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+    }
+    
+    .auth-card h2::before {
+      content: "";
+      display: block;
+      width: 4px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: var(--radius-full);
+    }
+  </style>
 </head>
-<body>
+<body class="layout-top-nav">
 
-<div class="navbar">
-  <h2>Patient Portal</h2>
-  <div>
-    <button onclick="window.location.href='index.html'">Home</button>
-    <button onclick="window.history.back()">Back</button>
-  </div>
-</div>
+<header class="navbar">
+  <div class="navbar-brand">Smart Clinic</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="window.location.href='index.html'"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Back</button>
+  </nav>
+</header>
 
-<div class="dashboard-container patient-portal-grid">
-  <div class="form-container">
-    <h2>Patient Login</h2>
-    <input id="loginEmail" type="email" placeholder="Email">
-    <input id="loginPassword" type="password" placeholder="Password">
-    <button class="primary" onclick="patientLogin()">Login</button>
-    <p id="loginMessage" class="error-text"></p>
-  </div>
+<main class="main-content">
+  <div class="auth-container">
+    <!-- LOGIN CARD -->
+    <div class="auth-card">
+      <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+      
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail"><i class="fas fa-envelope"></i> Email</label>
+          <input id="loginEmail" type="email" placeholder="Enter your email" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="loginPassword"><i class="fas fa-lock"></i> Password</label>
+          <input id="loginPassword" type="password" placeholder="Enter your password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top: var(--spacing-4);">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+      </form>
+      
+      <div id="loginMessage"></div>
+    </div>
 
-  <div class="form-container">
-    <h2>Create Account</h2>
-    <input id="registerName" placeholder="Full Name">
-    <input id="registerEmail" type="email" placeholder="Email">
-    <input id="registerPhone" placeholder="Phone">
-    <input id="registerIc" placeholder="IC Number">
-    <input id="registerPassword" type="password" placeholder="Password">
-    <button class="primary" onclick="patientRegister()">Register</button>
-    <p id="registerMessage" class="error-text"></p>
+    <!-- REGISTER CARD -->
+    <div class="auth-card">
+      <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+      
+      <form onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label" for="registerName"><i class="fas fa-user"></i> Full Name</label>
+          <input id="registerName" type="text" placeholder="Enter your full name" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="registerEmail"><i class="fas fa-envelope"></i> Email</label>
+          <input id="registerEmail" type="email" placeholder="Enter your email" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="registerPhone"><i class="fas fa-phone"></i> Phone</label>
+          <input id="registerPhone" type="tel" placeholder="Enter your phone number" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="registerIc"><i class="fas fa-id-card"></i> IC Number</label>
+          <input id="registerIc" type="text" placeholder="Enter your IC number" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="registerPassword"><i class="fas fa-lock"></i> Password</label>
+          <input id="registerPassword" type="password" placeholder="Enter a password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-success btn-full" style="margin-top: var(--spacing-4);">
+          <i class="fas fa-user-plus"></i> Register
+        </button>
+      </form>
+      
+      <div id="registerMessage"></div>
+    </div>
   </div>
-</div>
+</main>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Secure Healthcare Management Platform.</p>
+</footer>
 
 <script>
-async function patientLogin() {
+async function handleLogin(event) {
+  event.preventDefault();
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
+  const messageEl = document.getElementById('loginMessage');
 
-  const res = await fetch('http://localhost:5000/api/patients/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
+  try {
+    const res = await fetch('http://localhost:5000/api/patients/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
 
-  const data = await res.json();
-  if (!res.ok) {
-    document.getElementById('loginMessage').innerText = data.message || 'Login failed';
-    return;
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showMessage(messageEl, data.message || 'Login failed', 'error');
+      return;
+    }
+
+    localStorage.setItem('patientToken', data.token);
+    localStorage.setItem('patientProfile', JSON.stringify(data.patient));
+    showMessage(messageEl, 'Login successful! Redirecting...', 'success');
+    setTimeout(() => window.location.href = 'patient-dashboard.html', 1500);
+  } catch (err) {
+    showMessage(messageEl, 'Connection error. Please try again.', 'error');
   }
-
-  localStorage.setItem('patientToken', data.token);
-  localStorage.setItem('patientProfile', JSON.stringify(data.patient));
-  window.location.href = 'patient-dashboard.html';
 }
 
-async function patientRegister() {
+async function handleRegister(event) {
+  event.preventDefault();
   const payload = {
     fullName: document.getElementById('registerName').value.trim(),
     email: document.getElementById('registerEmail').value.trim(),
@@ -73,25 +191,34 @@ async function patientRegister() {
     icNumber: document.getElementById('registerIc').value.trim(),
     password: document.getElementById('registerPassword').value.trim()
   };
+  const messageEl = document.getElementById('registerMessage');
 
-  const res = await fetch('http://localhost:5000/api/patients/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const res = await fetch('http://localhost:5000/api/patients/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  const data = await res.json();
-  if (!res.ok) {
-    document.getElementById('registerMessage').innerText = data.message || 'Registration failed';
-    return;
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showMessage(messageEl, data.message || 'Registration failed', 'error');
+      return;
+    }
+
+    localStorage.setItem('patientToken', data.token);
+    localStorage.setItem('patientProfile', JSON.stringify(data.patient));
+    showMessage(messageEl, 'Registration successful! Redirecting...', 'success');
+    setTimeout(() => window.location.href = 'patient-dashboard.html', 1500);
+  } catch (err) {
+    showMessage(messageEl, 'Connection error. Please try again.', 'error');
   }
+}
 
-  localStorage.setItem('patientToken', data.token);
-  localStorage.setItem('patientProfile', JSON.stringify(data.patient));
-  window.location.href = 'patient-dashboard.html';
+function showMessage(el, message, type) {
+  el.innerHTML = `<div class="alert alert-${type}" style="margin-top: var(--spacing-4);"><div class="alert-content"><p style="margin: 0;">${message}</p></div></div>`;
 }
 </script>
-
-<footer><p>© 2026 Smart Clinic System</p></footer>
 </body>
 </html>

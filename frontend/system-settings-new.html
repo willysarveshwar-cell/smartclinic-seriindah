@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>System Settings | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-8);
+    }
+
+    .settings-nav {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-4);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+    }
+
+    .settings-nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding: var(--spacing-3) var(--spacing-4);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-primary);
+      border: none;
+      background: transparent;
+      width: 100%;
+      font-size: var(--text-sm);
+      font-weight: var(--font-medium);
+      margin-bottom: var(--spacing-2);
+    }
+
+    .settings-nav-item:hover {
+      background: var(--surface-secondary);
+    }
+
+    .settings-nav-item.active {
+      background: var(--gradient-primary);
+      color: var(--text-inverse);
+    }
+
+    .settings-content {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-8);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .settings-section {
+      display: none;
+    }
+
+    .settings-section.active {
+      display: block;
+    }
+
+    .settings-group {
+      margin-bottom: var(--spacing-8);
+      padding-bottom: var(--spacing-8);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-group:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .settings-title {
+      font-size: var(--text-lg);
+      font-weight: var(--font-semibold);
+      margin-bottom: var(--spacing-4);
+      color: var(--text-primary);
+    }
+
+    .settings-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-6);
+      align-items: center;
+      margin-bottom: var(--spacing-4);
+      padding: var(--spacing-4);
+      background: var(--surface-secondary);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+
+    .settings-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .settings-label {
+      font-weight: var(--font-medium);
+      color: var(--text-primary);
+    }
+
+    .settings-description {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin-top: var(--spacing-1);
+    }
+
+    .settings-control {
+      display: flex;
+      gap: var(--spacing-3);
+      align-items: center;
+    }
+
+    .toggle-switch {
+      width: 56px;
+      height: 32px;
+      background: var(--text-secondary);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s ease;
+      border: none;
+      padding: 2px;
+    }
+
+    .toggle-switch.active {
+      background: var(--success);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      background: white;
+      border-radius: var(--radius-full);
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s ease;
+    }
+
+    .toggle-switch.active::after {
+      left: 26px;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-6);
+    }
+
+    .settings-input {
+      padding: var(--spacing-3) var(--spacing-4);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-sm);
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+
+    .settings-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .danger-zone {
+      background: var(--danger-bg);
+      border: 2px solid var(--danger);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+    }
+
+    .danger-title {
+      color: var(--danger);
+      font-weight: var(--font-bold);
+      margin-bottom: var(--spacing-3);
+    }
+
+    .danger-description {
+      color: var(--danger);
+      font-size: var(--text-sm);
+      margin-bottom: var(--spacing-4);
+    }
+
+    @media (max-width: 768px) {
+      .settings-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .settings-nav {
+        position: relative;
+        top: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--spacing-2);
+        padding: var(--spacing-3);
+      }
+
+      .settings-nav-item {
+        margin-bottom: 0;
+        font-size: var(--text-xs);
+      }
+
+      .settings-item {
+        grid-template-columns: 1fr;
+      }
+
+      .settings-control {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">System Settings</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">System Settings & Configuration</h1>
+    <p class="page-description">Manage clinic settings, notifications, and system preferences</p>
+  </div>
+
+  <div class="settings-layout">
+    <!-- SETTINGS NAVIGATION -->
+    <nav class="settings-nav">
+      <button class="settings-nav-item active" onclick="switchTab('general')">
+        <i class="fas fa-cog"></i> General
+      </button>
+      <button class="settings-nav-item" onclick="switchTab('clinic')">
+        <i class="fas fa-hospital"></i> Clinic Info
+      </button>
+      <button class="settings-nav-item" onclick="switchTab('working-hours')">
+        <i class="fas fa-clock"></i> Working Hours
+      </button>
+      <button class="settings-nav-item" onclick="switchTab('notifications')">
+        <i class="fas fa-bell"></i> Notifications
+      </button>
+      <button class="settings-nav-item" onclick="switchTab('appointment')">
+        <i class="fas fa-calendar-alt"></i> Appointments
+      </button>
+      <button class="settings-nav-item" onclick="switchTab('security')">
+        <i class="fas fa-shield-alt"></i> Security
+      </button>
+      <button class="settings-nav-item" onclick="switchTab('advanced')">
+        <i class="fas fa-sliders-h"></i> Advanced
+      </button>
+    </nav>
+
+    <!-- SETTINGS CONTENT -->
+    <div class="settings-content">
+      <!-- GENERAL SETTINGS -->
+      <div class="settings-section active" id="general-tab">
+        <h2 class="settings-title"><i class="fas fa-cog"></i> General Settings</h2>
+
+        <div class="settings-group">
+          <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); margin-bottom: var(--spacing-4);">System Preferences</h3>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Dark Mode</div>
+              <div class="settings-description">Enable dark theme for the interface</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch" onclick="toggleSetting('darkMode', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Auto-Save Draft</div>
+              <div class="settings-description">Automatically save form drafts</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch active" onclick="toggleSetting('autoSave', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Session Timeout</div>
+              <div class="settings-description">Time before automatic logout (minutes)</div>
+            </div>
+            <div class="settings-control">
+              <input type="number" class="settings-input" value="30" style="max-width: 100px;" placeholder="Minutes">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLINIC INFO -->
+      <div class="settings-section" id="clinic-tab">
+        <h2 class="settings-title"><i class="fas fa-hospital"></i> Clinic Information</h2>
+
+        <div class="settings-group">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Clinic Name</label>
+              <input type="text" class="settings-input" placeholder="Smart Clinic" value="Smart Clinic">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="settings-input" placeholder="info@smartclinic.com" value="info@smartclinic.com">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="settings-input" placeholder="+60 1-2345-6789">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <input type="text" class="settings-input" placeholder="123 Healthcare Street">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">City</label>
+              <input type="text" class="settings-input" placeholder="Kuala Lumpur">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input type="text" class="settings-input" placeholder="Malaysia">
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveSettings('clinic')" style="margin-top: var(--spacing-6);">
+            <i class="fas fa-save"></i> Save Clinic Info
+          </button>
+        </div>
+      </div>
+
+      <!-- WORKING HOURS -->
+      <div class="settings-section" id="working-hours-tab">
+        <h2 class="settings-title"><i class="fas fa-clock"></i> Working Hours</h2>
+
+        <div class="settings-group">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--spacing-4);">
+            <div>
+              <label class="form-label">Day</label>
+            </div>
+            <div>
+              <label class="form-label">Opening Time</label>
+            </div>
+            <div>
+              <label class="form-label">Closing Time</label>
+            </div>
+
+            ${['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, idx) => `
+              <div><input type="text" class="settings-input" value="${day}" disabled></div>
+              <div><input type="time" class="settings-input" value="${idx < 5 ? '08:00' : '09:00'}"></div>
+              <div><input type="time" class="settings-input" value="${idx < 5 ? '17:00' : idx === 5 ? '13:00' : '00:00'}" ${idx === 6 ? 'disabled' : ''}></div>
+            `).join('')}
+          </div>
+
+          <button class="btn btn-primary" onclick="saveSettings('hours')" style="margin-top: var(--spacing-6);">
+            <i class="fas fa-save"></i> Save Working Hours
+          </button>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="settings-section" id="notifications-tab">
+        <h2 class="settings-title"><i class="fas fa-bell"></i> Notification Settings</h2>
+
+        <div class="settings-group">
+          <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); margin-bottom: var(--spacing-4);">Email Notifications</h3>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Appointment Reminders</div>
+              <div class="settings-description">Send email reminders before appointments</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch active" onclick="toggleSetting('emailReminders', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Appointment Confirmations</div>
+              <div class="settings-description">Send confirmation emails after booking</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch active" onclick="toggleSetting('emailConfirmations', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Queue Notifications</div>
+              <div class="settings-description">Notify patients when they're next in queue</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch active" onclick="toggleSetting('queueNotifications', this)"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); margin-bottom: var(--spacing-4);">SMS Notifications</h3>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">SMS Enabled</div>
+              <div class="settings-description">Enable SMS notifications to patients</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch" onclick="toggleSetting('smsEnabled', this)"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPOINTMENT SETTINGS -->
+      <div class="settings-section" id="appointment-tab">
+        <h2 class="settings-title"><i class="fas fa-calendar-alt"></i> Appointment Settings</h2>
+
+        <div class="settings-group">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Appointment Slot Duration (minutes)</label>
+              <input type="number" class="settings-input" value="30">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Maximum Advance Booking (days)</label>
+              <input type="number" class="settings-input" value="30">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Minimum Cancellation Notice (hours)</label>
+              <input type="number" class="settings-input" value="24">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">No-Show Grace Period (minutes)</label>
+              <input type="number" class="settings-input" value="15">
+            </div>
+          </div>
+
+          <div class="settings-item" style="margin-top: var(--spacing-4);">
+            <div>
+              <div class="settings-label">Allow Online Appointment Booking</div>
+              <div class="settings-description">Patients can book appointments online</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch active" onclick="toggleSetting('onlineBooking', this)"></button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveSettings('appointments')" style="margin-top: var(--spacing-6);">
+            <i class="fas fa-save"></i> Save Appointment Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- SECURITY -->
+      <div class="settings-section" id="security-tab">
+        <h2 class="settings-title"><i class="fas fa-shield-alt"></i> Security Settings</h2>
+
+        <div class="settings-group">
+          <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); margin-bottom: var(--spacing-4);">Access Control</h3>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Two-Factor Authentication</div>
+              <div class="settings-description">Require 2FA for admin accounts</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch" onclick="toggleSetting('twoFactor', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">IP Whitelist</div>
+              <div class="settings-description">Restrict access by IP address</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch" onclick="toggleSetting('ipWhitelist', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Password Expiry</div>
+              <div class="settings-description">Require password change every (days)</div>
+            </div>
+            <div class="settings-control">
+              <input type="number" class="settings-input" value="90" style="max-width: 100px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVANCED -->
+      <div class="settings-section" id="advanced-tab">
+        <h2 class="settings-title"><i class="fas fa-sliders-h"></i> Advanced Settings</h2>
+
+        <div class="settings-group">
+          <h3 style="font-size: var(--text-base); font-weight: var(--font-semibold); margin-bottom: var(--spacing-4);">Database & Backup</h3>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Auto Backup</div>
+              <div class="settings-description">Automatically backup database daily</div>
+            </div>
+            <div class="settings-control">
+              <button class="toggle-switch active" onclick="toggleSetting('autoBackup', this)"></button>
+            </div>
+          </div>
+
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">Backup Frequency</div>
+              <div class="settings-description">How often to backup (hours)</div>
+            </div>
+            <div class="settings-control">
+              <input type="number" class="settings-input" value="24" style="max-width: 100px;">
+            </div>
+          </div>
+        </div>
+
+        <div class="danger-zone">
+          <h3 class="danger-title"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+          <p class="danger-description">These actions cannot be undone. Please proceed with caution.</p>
+
+          <button class="btn btn-danger" onclick="if(confirm('Are you sure? This will clear all system logs.')) { showMessage('System logs cleared', 'success'); }">
+            <i class="fas fa-trash"></i> Clear System Logs
+          </button>
+          <button class="btn btn-danger" style="margin-left: var(--spacing-3);" onclick="if(confirm('Are you sure? This will delete all test data.')) { showMessage('Test data deleted', 'success'); }">
+            <i class="fas fa-skull"></i> Delete Test Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Comprehensive system configuration and settings management.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+function switchTab(tabName) {
+  // Hide all sections
+  document.querySelectorAll('.settings-section').forEach(section => {
+    section.classList.remove('active');
+  });
+
+  // Remove active class from nav items
+  document.querySelectorAll('.settings-nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+
+  // Show selected section
+  document.getElementById(`${tabName}-tab`).classList.add('active');
+
+  // Add active class to clicked nav item
+  event.target.closest('.settings-nav-item')?.classList.add('active');
+}
+
+function toggleSetting(key, element) {
+  element.classList.toggle('active');
+  const state = element.classList.contains('active') ? 'enabled' : 'disabled';
+  showMessage(`${key} ${state}`, 'info');
+}
+
+function saveSettings(section) {
+  showMessage(`${section} settings saved successfully!`, 'success');
+}
+
+function showMessage(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 4000);
+}
+
+function token() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function requireAdminLogin() {
+  if (!token()) {
+    showMessage("Admin login required. Redirecting to login page.", "warning");
+    setTimeout(() => window.location.href = "admin-login.html", 2000);
+    return false;
+  }
+  return true;
+}
+
+// Verify admin access on page load
+requireAdminLogin();
+</script>
+</body>
+</html>

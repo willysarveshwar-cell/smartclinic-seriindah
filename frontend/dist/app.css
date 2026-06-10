@@ -590,13 +590,110 @@ input[type="submit"] {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  gap: 12px;
 }
 .list-container li {
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
+.list-container li.queue-card {
+  padding: 0;
+  border-bottom: none;
+}
 .list-container li:last-child {
   border-bottom: none;
+}
+.queue-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 4px);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.queue-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary-light);
+}
+.queue-card__main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.queue-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.queue-card__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  height: 34px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border-radius: 999px;
+  font-weight: 700;
+}
+.queue-card__patient {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+}
+.queue-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.queue-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.queue-status-pill.waiting {
+  background: var(--warning-soft);
+  color: #92400e;
+}
+.queue-status-pill.in-progress {
+  background: var(--info-soft);
+  color: #075985;
+}
+.queue-status-pill.completed {
+  background: var(--success-soft);
+  color: #065f46;
+}
+.queue-status-pill.cancelled {
+  background: var(--danger-soft);
+  color: #991b1b;
+}
+.queue-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.queue-card__actions button {
+  min-width: 86px;
+}
+.queue-selected-row {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  background: rgba(14, 165, 233, 0.08);
 }
 /* ---------- TABLES ---------- */
 table {

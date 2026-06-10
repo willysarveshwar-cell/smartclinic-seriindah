@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Admin Dashboard | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="layout-top-nav">
+
+<!-- NAVBAR -->
+<header class="navbar" style="background: linear-gradient(135deg, var(--primary-900) 0%, var(--primary-dark) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+  <div class="navbar-brand">Smart Clinic Administration</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+    <button class="btn btn-primary btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Admin Dashboard</h1>
+    <p class="page-description">System overview and clinic management control center</p>
+  </div>
+
+  <!-- QUICK STATS SECTION -->
+  <section class="section">
+    <h2 class="section-title">System Overview</h2>
+    <div class="dashboard-grid">
+      <div class="stat-card" onclick="toggleDoctorsList()" style="cursor: pointer;">
+        <div class="stat-label"><i class="fas fa-user-doctor"></i> Total Doctors</div>
+        <div class="stat-value" id="totalDoctors">0</div>
+        <div class="stat-description">Click to view list</div>
+      </div>
+
+      <div class="stat-card" onclick="toggleAppointmentsList()" style="cursor: pointer;">
+        <div class="stat-label"><i class="fas fa-calendar-check"></i> Today's Appointments</div>
+        <div class="stat-value" id="todayAppointments">0</div>
+        <div class="stat-description">Click to view list</div>
+      </div>
+
+      <div class="stat-card" onclick="toggleQueueList()" style="cursor: pointer;">
+        <div class="stat-label"><i class="fas fa-users"></i> Patients in Queue</div>
+        <div class="stat-value" id="queuePatients">0</div>
+        <div class="stat-description">Click to view list</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-user-injured"></i> Total Patients</div>
+        <div class="stat-value" id="totalPatients">0</div>
+        <div class="stat-description">Registered patients</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLLAPSIBLE LISTS -->
+  <div id="doctorsList" class="card" style="display: none; margin-bottom: var(--spacing-6);">
+    <div class="card-header">
+      <h3 class="card-title">Doctors List</h3>
+      <button class="btn btn-text" onclick="toggleDoctorsList()"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="card-body">
+      <div id="doctorsListContent" style="max-height: 400px; overflow-y: auto;">Loading...</div>
+    </div>
+  </div>
+
+  <div id="appointmentsList" class="card" style="display: none; margin-bottom: var(--spacing-6);">
+    <div class="card-header">
+      <h3 class="card-title">Today's Appointments</h3>
+      <button class="btn btn-text" onclick="toggleAppointmentsList()"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="card-body">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Doctor</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="appointmentsTableBody">
+            <tr><td colspan="4" style="text-align: center; padding: var(--spacing-4);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="queueList" class="card" style="display: none; margin-bottom: var(--spacing-6);">
+    <div class="card-header">
+      <h3 class="card-title">Patients in Queue</h3>
+      <button class="btn btn-text" onclick="toggleQueueList()"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="card-body">
+      <ul id="queueUl" style="list-style: none; padding: 0;">Loading...</ul>
+    </div>
+  </div>
+
+  <!-- MANAGEMENT MODULES -->
+  <section class="section">
+    <h2 class="section-title">Management Modules</h2>
+    <div class="features-grid">
+      <div class="feature-card" onclick="location.href='manage-doctors.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-user-doctor"></i></div>
+        <h3 class="feature-title">Manage Doctors</h3>
+        <p class="feature-description">Add, edit, update, and manage doctor profiles and specializations.</p>
+      </div>
+
+      <div class="feature-card" onclick="location.href='manage-patients.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-user-injured"></i></div>
+        <h3 class="feature-title">Manage Patients</h3>
+        <p class="feature-description">Add, update, delete patients, search, and view visit history.</p>
+      </div>
+
+      <div class="feature-card" onclick="location.href='manage-appointments.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+        <h3 class="feature-title">Appointments</h3>
+        <p class="feature-description">View, manage, reschedule, and track all patient appointments.</p>
+      </div>
+
+      <div class="feature-card" onclick="location.href='manage-queues.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-list-ol"></i></div>
+        <h3 class="feature-title">Queue Control</h3>
+        <p class="feature-description">Monitor and control live patient queues in real-time.</p>
+      </div>
+
+      <div class="feature-card" onclick="location.href='reports.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-chart-bar"></i></div>
+        <h3 class="feature-title">Reports & Analytics</h3>
+        <p class="feature-description">View clinic performance statistics and detailed analytics.</p>
+      </div>
+
+      <div class="feature-card" onclick="location.href='manage-leaves.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-calendar-times"></i></div>
+        <h3 class="feature-title">Leave Requests</h3>
+        <p class="feature-description">Approve, reject, and review doctor leave requests.</p>
+      </div>
+
+      <div class="feature-card" onclick="location.href='system-settings.html'" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-cog"></i></div>
+        <h3 class="feature-title">System Settings</h3>
+        <p class="feature-description">Configure clinic operational settings and preferences.</p>
+      </div>
+
+      <div class="feature-card" onclick="toggleDescriptions()" style="cursor: pointer;">
+        <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
+        <h3 class="feature-title">Patient Descriptions</h3>
+        <p class="feature-description">View and download patient descriptions as PDF.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESCRIPTIONS LIST -->
+  <div id="descriptionsList" class="card" style="display: none; margin-bottom: var(--spacing-6);">
+    <div class="card-header">
+      <h3 class="card-title">Patient Descriptions</h3>
+      <button class="btn btn-text" onclick="toggleDescriptions()"><i class="fas fa-times"></i> Close</button>
+    </div>
+    <div class="card-body">
+      <div id="descriptionsContent">Loading...</div>
+    </div>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Professional Healthcare Administration.</p>
+</footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+if (localStorage.getItem("adminLoggedIn") !== "true") {
+  window.location.href = "admin-login.html";
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "admin-login.html";
+}
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+function goBack() {
+  window.history.back();
+}
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+  return fetch(url, { ...options, headers });
+}
+
+async function loadDashboardData() {
+  try {
+    const [doctorsRes, appointmentsRes, queueRes, patientsRes] = await Promise.all([
+      apiFetch('http://localhost:5000/api/doctors'),
+      apiFetch('http://localhost:5000/api/appointments/today'),
+      apiFetch('http://localhost:5000/api/queue'),
+      apiFetch('http://localhost:5000/api/patients')
+    ]);
+
+    const doctors = await doctorsRes.json();
+    const appointments = await appointmentsRes.json();
+    const queue = await queueRes.json();
+    const patients = await patientsRes.json();
+
+    document.getElementById('totalDoctors').textContent = doctors.length;
+    document.getElementById('todayAppointments').textContent = appointments.length;
+    document.getElementById('queuePatients').textContent = queue.length;
+    document.getElementById('totalPatients').textContent = (patients.length || 0);
+
+  } catch (err) {
+    console.error('Error loading dashboard data:', err);
+  }
+}
+
+async function toggleDoctorsList() {
+  const container = document.getElementById('doctorsList');
+  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+  
+  if (container.style.display === 'block') {
+    try {
+      const res = await apiFetch('http://localhost:5000/api/doctors');
+      const doctors = await res.json();
+      
+      let html = '<ul style="list-style: none; padding: 0;">';
+      doctors.forEach(doctor => {
+        html += `
+          <li style="padding: var(--spacing-3); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong>Dr. ${doctor.name}</strong>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">${doctor.specialization}</p>
+            </div>
+            <span style="background: var(--primary-50); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600;">Active</span>
+          </li>
+        `;
+      });
+      html += '</ul>';
+      document.getElementById('doctorsListContent').innerHTML = html;
+    } catch (err) {
+      document.getElementById('doctorsListContent').innerHTML = '<p style="color: var(--danger);">Error loading doctors</p>';
+    }
+  }
+}
+
+async function toggleAppointmentsList() {
+  const container = document.getElementById('appointmentsList');
+  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+  
+  if (container.style.display === 'block') {
+    try {
+      const res = await apiFetch('http://localhost:5000/api/appointments/today');
+      const appointments = await res.json();
+      
+      let html = '';
+      appointments.forEach(apt => {
+        html += `
+          <tr>
+            <td>${apt.patientName}</td>
+            <td>${apt.doctorName || 'N/A'}</td>
+            <td>${apt.appointmentTime}</td>
+            <td><span class="table-status status-${apt.status.toLowerCase().replace(' ', '-')}">${apt.status}</span></td>
+          </tr>
+        `;
+      });
+      
+      if (!html) {
+        html = '<tr><td colspan="4" style="text-align: center; padding: var(--spacing-4);">No appointments today</td></tr>';
+      }
+      
+      document.getElementById('appointmentsTableBody').innerHTML = html;
+    } catch (err) {
+      document.getElementById('appointmentsTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--danger);">Error loading appointments</td></tr>';
+    }
+  }
+}
+
+async function toggleQueueList() {
+  const container = document.getElementById('queueList');
+  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+  
+  if (container.style.display === 'block') {
+    try {
+      const res = await apiFetch('http://localhost:5000/api/queue');
+      const queue = await res.json();
+      
+      let html = '';
+      queue.forEach(patient => {
+        html += `
+          <li style="padding: var(--spacing-3); background: var(--surface-secondary); margin-bottom: var(--spacing-2); border-radius: var(--radius); border-left: 4px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>#${patient.queueNumber}</strong> - ${patient.patientName}
+                <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">${patient.doctorName || 'N/A'}</p>
+              </div>
+              <span class="table-status status-${patient.status.toLowerCase()}">${patient.status}</span>
+            </div>
+          </li>
+        `;
+      });
+      
+      if (!html) {
+        html = '<li style="padding: var(--spacing-3); text-align: center; color: var(--text-secondary);">No patients in queue</li>';
+      }
+      
+      document.getElementById('queueUl').innerHTML = html;
+    } catch (err) {
+      document.getElementById('queueUl').innerHTML = '<li style="color: var(--danger);">Error loading queue</li>';
+    }
+  }
+}
+
+function toggleDescriptions() {
+  const container = document.getElementById('descriptionsList');
+  container.style.display = container.style.display === 'none' ? 'block' : 'none';
+}
+
+// Load data on page load
+loadDashboardData();
+// Refresh data every 30 seconds
+setInterval(loadDashboardData, 30000);
+</script>
+</body>
+</html>

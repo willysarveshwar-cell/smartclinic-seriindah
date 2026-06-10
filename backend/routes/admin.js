@@ -535,6 +535,29 @@ router.get("/analytics", async (req, res) => {
   }
 });
 
+router.get("/reports/followups", authenticate, requireRole("Admin"), async (req, res) => {
+  try {
+    const days = Number(req.query.days || 7);
+    const dateFrom = req.query.date_from ? String(req.query.date_from) : dayjs().subtract(days - 1, "day").format("YYYY-MM-DD");
+    const dateTo = req.query.date_to ? String(req.query.date_to) : dayjs().format("YYYY-MM-DD");
+
+    const followupRows = await db.queryAsync(
+      `SELECT appointment_date AS date, COUNT(*) AS total
+       FROM appointments
+       WHERE follow_up = 1
+         AND appointment_date BETWEEN ? AND ?
+       GROUP BY appointment_date
+       ORDER BY appointment_date ASC`,
+      [dateFrom, dateTo]
+    );
+
+    res.json(followupRows);
+  } catch (error) {
+    console.error("Follow-up report error:", error.message);
+    res.status(500).json({ message: "Failed to load follow-up report" });
+  }
+});
+
 // Backward-compatible route for legacy admin pages.
 router.get("/appointments/today", async (req, res) => {
   try {

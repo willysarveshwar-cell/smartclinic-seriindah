@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Manage Queues | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    .queue-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-8);
+    }
+
+    .queue-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .queue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-4);
+      padding-bottom: var(--spacing-4);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .queue-title {
+      font-size: var(--text-lg);
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+
+    .queue-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: var(--gradient-primary);
+      color: var(--text-inverse);
+      font-weight: var(--font-bold);
+      font-size: var(--text-lg);
+    }
+
+    .queue-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-3);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .queue-stat {
+      background: var(--surface-secondary);
+      padding: var(--spacing-3);
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+
+    .queue-stat-value {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      color: var(--primary);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .queue-stat-label {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .current-patient {
+      background: var(--gradient-primary);
+      color: var(--text-inverse);
+      padding: var(--spacing-4);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .current-label {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: var(--spacing-2);
+    }
+
+    .current-name {
+      font-size: var(--text-xl);
+      font-weight: var(--font-bold);
+      margin: 0;
+    }
+
+    .queue-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding: var(--spacing-3);
+      background: var(--surface-secondary);
+      border-radius: var(--radius);
+      margin-bottom: var(--spacing-2);
+      border-left: 4px solid var(--primary);
+    }
+
+    .queue-item-number {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      color: var(--text-inverse);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--font-bold);
+      flex-shrink: 0;
+    }
+
+    .queue-item-info {
+      flex: 1;
+    }
+
+    .queue-item-name {
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+      margin: 0 0 var(--spacing-1) 0;
+      font-size: var(--text-sm);
+    }
+
+    .queue-item-time {
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .queue-actions {
+      display: flex;
+      gap: var(--spacing-2);
+      justify-content: space-between;
+      margin-top: var(--spacing-4);
+      padding-top: var(--spacing-4);
+      border-top: 1px solid var(--border);
+    }
+
+    .filter-section {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-6);
+      border: 1px solid var(--border);
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-4);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .filter-select {
+      padding: var(--spacing-3) var(--spacing-4);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      background: var(--surface);
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .refresh-btn {
+      position: fixed;
+      bottom: var(--spacing-6);
+      right: var(--spacing-6);
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-full);
+      background: var(--gradient-primary);
+      color: var(--text-inverse);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      transition: all 0.2s ease;
+      z-index: 100;
+    }
+
+    .refresh-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .refresh-btn.loading {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .queue-container {
+        grid-template-columns: 1fr;
+      }
+
+      .queue-list {
+        max-height: 300px;
+      }
+
+      .refresh-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+        bottom: var(--spacing-4);
+        right: var(--spacing-4);
+      }
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Queue Management</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button class="btn btn-text" onclick="goDoctors()"><i class="fas fa-user-md"></i> Doctors</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Queue Management</h1>
+    <p class="page-description">Manage patient queues for each doctor in real-time</p>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-section">
+    <h3 style="margin-bottom: var(--spacing-4);"><i class="fas fa-filter"></i> Filter Queues</h3>
+    <div class="filter-grid">
+      <div class="form-group">
+        <label class="form-label">Doctor</label>
+        <input id="doctorFilter" type="text" placeholder="Search doctor name..." class="filter-select">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Specialization</label>
+        <select id="specFilter" class="filter-select">
+          <option value="">All Specializations</option>
+          <option value="General Medicine">General Medicine</option>
+          <option value="Cardiology">Cardiology</option>
+          <option value="Dermatology">Dermatology</option>
+          <option value="Pediatrics">Pediatrics</option>
+          <option value="Orthopedics">Orthopedics</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-3); align-items: flex-end;">
+        <button class="btn btn-primary" onclick="loadQueues()">
+          <i class="fas fa-search"></i> Search
+        </button>
+        <button class="btn btn-secondary" onclick="clearFilters()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUEUES GRID -->
+  <div id="queuesContainer" class="queue-container">
+    <div style="text-align: center; padding: var(--spacing-8); grid-column: 1 / -1;">
+      <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: var(--spacing-4);"></i>
+      <p style="color: var(--text-secondary);">Loading queues...</p>
+    </div>
+  </div>
+</main>
+
+<!-- SKIP PATIENT MODAL -->
+<div class="modal-overlay" id="skipModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Skip Patient?</h3>
+      <button class="modal-close" onclick="closeSkipModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to skip patient <strong id="skipPatientName"></strong>?</p>
+      <p style="color: var(--text-secondary); font-size: var(--text-sm);">They will be moved to the end of the queue.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSkipModal()">Cancel</button>
+      <button class="btn btn-warning" onclick="confirmSkip()">Skip Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALL NEXT MODAL -->
+<div class="modal-overlay" id="callModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-check-circle"></i> Mark Patient as Complete</h3>
+      <button class="modal-close" onclick="closeCallModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Mark <strong id="callPatientName"></strong> as completed and move to the next patient?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCallModal()">Cancel</button>
+      <button class="btn btn-success" onclick="confirmCall()">Mark Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- REFRESH BUTTON -->
+<button class="refresh-btn" id="refreshBtn" onclick="loadQueues()" title="Refresh queues">
+  <i class="fas fa-sync-alt"></i>
+</button>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Real-time queue management system.</p>
+</footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="script.js"></script>
+<script>
+let queuesData = [];
+let skipQueueId = null;
+let callQueueId = null;
+
+function token() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function authHeaders() {
+  return { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` };
+}
+
+function requireAdminLogin() {
+  if (!token()) {
+    showMessage("Admin login required. Redirecting to login page.", "warning");
+    setTimeout(() => window.location.href = "admin-login.html", 2000);
+    return false;
+  }
+  return true;
+}
+
+async function loadQueues() {
+  if (!requireAdminLogin()) return;
+
+  const doctorFilter = document.getElementById("doctorFilter").value;
+  const specFilter = document.getElementById("specFilter").value;
+
+  const params = new URLSearchParams();
+  if (doctorFilter) params.set("doctor", doctorFilter);
+  if (specFilter) params.set("specialization", specFilter);
+
+  const refreshBtn = document.getElementById("refreshBtn");
+  refreshBtn.classList.add("loading");
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/queues?${params}`, { headers: authHeaders() });
+
+    if (res.status === 401 || res.status === 403) {
+      showMessage("Session expired. Please log in again.", "warning");
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(data.message || "Failed to load queues", "danger");
+      return;
+    }
+
+    queuesData = data;
+    renderQueues(data);
+  } catch (err) {
+    console.error("Error loading queues:", err);
+    showMessage("Error loading queues. Please try again.", "danger");
+  } finally {
+    refreshBtn.classList.remove("loading");
+  }
+}
+
+function renderQueues(queues) {
+  const container = document.getElementById("queuesContainer");
+
+  if (!Array.isArray(queues) || queues.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: var(--spacing-12); grid-column: 1 / -1;">
+        <i class="fas fa-inbox" style="font-size: 3rem; color: var(--text-secondary); opacity: 0.5; margin-bottom: var(--spacing-4);"></i>
+        <h3 style="color: var(--text-secondary);">No active queues found</h3>
+        <p style="color: var(--text-secondary); font-size: var(--text-sm);">${document.getElementById("doctorFilter").value ? "Try adjusting your filters" : "Queues will appear here as doctors start their sessions"}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const queuesHtml = queues.map(queue => {
+    const currentPatient = queue.patients && queue.patients.length > 0 ? queue.patients[0] : null;
+    const waitingPatients = queue.patients ? queue.patients.slice(1) : [];
+
+    return `
+      <div class="queue-card">
+        <div class="queue-header">
+          <h3 class="queue-title">
+            <i class="fas fa-user-md"></i>
+            ${escapeHtml(queue.doctorName)}
+            <span class="queue-count">${queue.patients ? queue.patients.length : 0}</span>
+          </h3>
+        </div>
+
+        <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--spacing-4); text-transform: uppercase;">
+          ${escapeHtml(queue.specialization)}
+        </div>
+
+        <div class="queue-stats">
+          <div class="queue-stat">
+            <div class="queue-stat-value">${queue.patients ? queue.patients.length : 0}</div>
+            <p class="queue-stat-label">In Queue</p>
+          </div>
+          <div class="queue-stat">
+            <div class="queue-stat-value">${queue.completed || 0}</div>
+            <p class="queue-stat-label">Completed</p>
+          </div>
+        </div>
+
+        ${currentPatient ? `
+          <div class="current-patient">
+            <div class="current-label"><i class="fas fa-arrow-right"></i> Now Serving</div>
+            <p class="current-name">${escapeHtml(currentPatient.patientName)}</p>
+            <div style="font-size: var(--text-xs); opacity: 0.8; margin-top: var(--spacing-2);">
+              Queue #${currentPatient.queueNumber} • Waiting time: ${calculateWaitTime(currentPatient.joinedAt)}
+            </div>
+          </div>
+
+          <div style="display: flex; gap: var(--spacing-2); margin-bottom: var(--spacing-4);">
+            <button class="btn btn-success btn-sm btn-full" onclick="openCallModal(${queue.queueId}, '${escapeHtml(currentPatient.patientName)}')">
+              <i class="fas fa-check"></i> Complete
+            </button>
+            <button class="btn btn-warning btn-sm btn-full" onclick="openSkipModal(${queue.queueId}, '${escapeHtml(currentPatient.patientName)}')">
+              <i class="fas fa-forward"></i> Skip
+            </button>
+          </div>
+        ` : `
+          <div style="background: var(--surface-secondary); padding: var(--spacing-6); border-radius: var(--radius-lg); text-align: center; color: var(--text-secondary);">
+            <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.5; margin-bottom: var(--spacing-2);"></i>
+            <p>No patients in queue</p>
+          </div>
+        `}
+
+        ${waitingPatients.length > 0 ? `
+          <div style="margin-top: var(--spacing-4);">
+            <p style="font-size: var(--text-xs); color: var(--text-secondary); text-transform: uppercase; margin-bottom: var(--spacing-3);"><i class="fas fa-clock"></i> Waiting (${waitingPatients.length})</p>
+            <div class="queue-list">
+              ${waitingPatients.map((patient, idx) => `
+                <div class="queue-item">
+                  <div class="queue-item-number">${idx + 2}</div>
+                  <div class="queue-item-info">
+                    <p class="queue-item-name">${escapeHtml(patient.patientName)}</p>
+                    <p class="queue-item-time">#${patient.queueNumber}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = queuesHtml;
+}
+
+function calculateWaitTime(joinedAt) {
+  if (!joinedAt) return "—";
+  const minutes = Math.floor((Date.now() - new Date(joinedAt).getTime()) / 60000);
+  return minutes + " min";
+}
+
+function openSkipModal(queueId, patientName) {
+  skipQueueId = queueId;
+  document.getElementById("skipPatientName").textContent = patientName;
+  document.getElementById("skipModal").classList.add("active");
+}
+
+function closeSkipModal() {
+  document.getElementById("skipModal").classList.remove("active");
+  skipQueueId = null;
+}
+
+async function confirmSkip() {
+  if (!skipQueueId) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/queues/${skipQueueId}/skip`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(data.message || "Failed to skip patient", "danger");
+      return;
+    }
+
+    showMessage("Patient moved to end of queue", "success");
+    closeSkipModal();
+    loadQueues();
+  } catch (err) {
+    console.error("Error:", err);
+    showMessage("Network error. Please try again.", "danger");
+  }
+}
+
+function openCallModal(queueId, patientName) {
+  callQueueId = queueId;
+  document.getElementById("callPatientName").textContent = patientName;
+  document.getElementById("callModal").classList.add("active");
+}
+
+function closeCallModal() {
+  document.getElementById("callModal").classList.remove("active");
+  callQueueId = null;
+}
+
+async function confirmCall() {
+  if (!callQueueId) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/queues/${callQueueId}/next`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(data.message || "Failed to update queue", "danger");
+      return;
+    }
+
+    showMessage("Patient marked as complete, next patient called", "success");
+    closeCallModal();
+    loadQueues();
+  } catch (err) {
+    console.error("Error:", err);
+    showMessage("Network error. Please try again.", "danger");
+  }
+}
+
+function clearFilters() {
+  document.getElementById("doctorFilter").value = "";
+  document.getElementById("specFilter").value = "";
+  loadQueues();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showMessage(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 4000);
+}
+
+// Real-time updates via Socket.io
+if (window.io) {
+  const socket = window.io("http://localhost:5000");
+  socket.on("queue:updated", () => loadQueues());
+  socket.on("queue:patient_called", () => loadQueues());
+  socket.on("queue:patient_completed", () => loadQueues());
+}
+
+// Auto-refresh every 10 seconds
+setInterval(loadQueues, 10000);
+
+// Load queues on page load
+loadQueues();
+</script>
+</body>
+</html>

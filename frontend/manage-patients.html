@@ -196,7 +196,7 @@ async function loadPatients(page = 1) {
             <th>ID</th><th>Name</th><th>Email</th><th>Phone</th>
             <th>IC Number</th><th>Age</th><th>Gender</th>
             <th>Today Doctor</th><th>Queue</th><th>Status</th>
-            <th>Registered</th><th>Actions</th>
+            <th>Registered</th><th>Follow-up</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -224,6 +224,11 @@ async function loadPatients(page = 1) {
           <td>${todayQueue}</td>
           <td>${p.today_status ? `<span class="status-badge ${statusClass}">${todayStatus}</span>` : "—"}</td>
           <td>${reg}</td>
+          <td style="text-align:center;">
+            <label style="display:inline-flex; align-items:center; gap:8px;">
+              <input type="checkbox" onchange="toggleFollowUp(${p.id}, this.checked)" ${p.needs_follow_up ? 'checked' : ''} />
+            </label>
+          </td>
           <td style="white-space:nowrap;">
             <button onclick="openEditModal(${p.id})" style="margin-right:4px;">✏️ Edit</button>
             <button onclick="viewHistory(${p.id})" style="margin-right:4px;">📋 History</button>
@@ -365,6 +370,28 @@ async function deletePatient(id, name) {
     }
   } catch (err) {
     alert("Network error: " + err.message);
+  }
+}
+
+// Toggle follow-up flag for a patient (admin action)
+async function toggleFollowUp(id, checked) {
+  try {
+    const res = await fetch(`${API}/${id}/followup`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ follow_up: !!checked })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.message || 'Failed to update follow-up status');
+      // revert checkbox state visually by reloading patients
+      loadPatients(currentPage);
+      return;
+    }
+    loadPatients(currentPage);
+  } catch (err) {
+    alert('Network error: ' + err.message);
+    loadPatients(currentPage);
   }
 }
 

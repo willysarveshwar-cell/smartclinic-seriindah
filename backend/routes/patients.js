@@ -517,7 +517,7 @@ router.get("/", authenticate, requireRole("Admin"), async (req, res) => {
 
     const rows = await db.queryAsync(
       `SELECT p.id, p.full_name, p.email, p.phone, p.ic_number,
-              p.date_of_birth, p.gender, p.created_at,
+              p.date_of_birth, p.gender, p.created_at, p.needs_follow_up,
               TIMESTAMPDIFF(YEAR, p.date_of_birth, CURDATE()) AS age,
               (
                 SELECT d.name
@@ -613,7 +613,7 @@ router.get("/:id", authenticate, requireRole("Admin"), async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const rows = await db.queryAsync(
       `SELECT id, full_name, email, phone, ic_number, date_of_birth, gender, created_at,
-              TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age
+              TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age, needs_follow_up
        FROM patients WHERE id = ? LIMIT 1`,
       [id]
     );
@@ -624,6 +624,28 @@ router.get("/:id", authenticate, requireRole("Admin"), async (req, res) => {
   } catch (error) {
     console.error("Admin get patient error:", error.message);
     return res.status(500).json({ message: "Failed to load patient" });
+  }
+});
+
+router.put("/:id/followup", authenticate, requireRole("Admin"), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const followUp = Boolean(req.body.follow_up);
+
+    const rows = await db.queryAsync("SELECT id FROM patients WHERE id = ? LIMIT 1", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    await db.queryAsync(
+      "UPDATE patients SET needs_follow_up = ?, updated_at = NOW() WHERE id = ?",
+      [followUp ? 1 : 0, id]
+    );
+
+    return res.json({ message: "Patient follow-up status updated", needs_follow_up: followUp });
+  } catch (error) {
+    console.error("Admin update patient follow-up error:", error.message);
+    return res.status(500).json({ message: "Failed to update follow-up status" });
   }
 });
 

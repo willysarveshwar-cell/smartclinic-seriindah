@@ -105,7 +105,15 @@ async function estimateQueueByDoctor(db, rows) {
   return rows;
 }
 
+function listWaitEstimatorMethods() {
+  return [
+    "getDoctorAverageMinutes",
+    "estimateQueueByDoctor"
+  ];
+}
+
 module.exports = {
   getDoctorAverageMinutes,
-  estimateQueueByDoctor
+  estimateQueueByDoctor,
+  listWaitEstimatorMethods
 };

@@ -81,6 +81,7 @@ async function initializeSchema() {
       phone VARCHAR(30),
       ic_number VARCHAR(30) UNIQUE NOT NULL,
       password VARCHAR(255) NOT NULL,
+      needs_follow_up TINYINT DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
@@ -109,6 +110,7 @@ async function initializeSchema() {
       queue_number INT NOT NULL,
       status VARCHAR(30) DEFAULT 'Waiting',
       description TEXT,
+      follow_up TINYINT DEFAULT 0,
       patient_id INT,
       check_in_token VARCHAR(10),
       check_in_confirmed TINYINT DEFAULT 0,
@@ -229,9 +231,11 @@ async function initializeSchema() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  await ensureColumn("patients", "needs_follow_up", "TINYINT DEFAULT 0");
   await ensureColumn("appointments", "patient_id", "INTEGER");
   await ensureColumn("appointments", "patient_email", "TEXT");
   await ensureColumn("appointments", "patient_phone", "TEXT");
+  await ensureColumn("appointments", "follow_up", "TINYINT DEFAULT 0");
   await ensureColumn("appointments", "check_in_token", "VARCHAR(10)");
   await ensureColumn("appointments", "check_in_confirmed", "TINYINT DEFAULT 0");
   await ensureColumn("appointments", "checked_in_at", "DATETIME");
