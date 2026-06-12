@@ -394,13 +394,18 @@ router.post("/", rateLimit, async (req, res) => {
 
     const trimmedMessages = messages.slice(-20);
 
-    // Fetch live doctors list
-    const doctors = await db.queryAsync(
-      "SELECT name, specialization FROM doctors ORDER BY name ASC"
-    );
-    const doctorListText = doctors.length > 0
-      ? doctors.map(d => `• ${d.name} — ${d.specialization}`).join("\n")
-      : null;
+    // Fetch live doctors list — non-fatal, chatbot works without it
+    let doctorListText = null;
+    try {
+      const doctors = await db.queryAsync(
+        "SELECT name, specialization FROM doctors ORDER BY name ASC"
+      );
+      if (doctors.length > 0) {
+        doctorListText = doctors.map(d => `• ${d.name} — ${d.specialization}`).join("\n");
+      }
+    } catch (_dbErr) {
+      // DB unavailable — continue with rule-based engine without doctor list
+    }
 
     // Use Claude AI if API key is properly configured
     if (isApiKeyConfigured()) {
@@ -450,11 +455,7 @@ RULES:
         const { messages } = req.body;
         const trimmedMessages = (messages || []).slice(-20);
         const lastUserMsg = [...trimmedMessages].reverse().find(m => m.role === "user")?.content || "";
-        const doctors = await db.queryAsync("SELECT name, specialization FROM doctors ORDER BY name ASC");
-        const doctorListText = doctors.length > 0
-          ? doctors.map(d => `• ${d.name} — ${d.specialization}`).join("\n")
-          : null;
-        const reply = findBestReply(lastUserMsg, doctorListText);
+        const reply = findBestReply(lastUserMsg, null);
         return res.json({ reply });
       } catch (fallbackErr) {
         console.error("[Chat] Fallback error:", fallbackErr.message);
