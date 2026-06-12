@@ -1,5 +1,6 @@
 const path = require("path");
 const dotenv = require("dotenv");
+const dns = require("dns");
 
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 const { Pool } = require("pg");
@@ -8,13 +9,23 @@ if (!process.env.SUPABASE_DB_URL) {
   console.error("❌ SUPABASE_DB_URL is missing. Please ensure backend/.env exists and contains the database URL.");
 }
 
+// Force IPv6 DNS resolution for Supabase direct connections.
+// Vercel's network supports IPv6 but Node defaults to IPv4-first lookup.
+const _origLookup = dns.lookup.bind(dns);
+dns.lookup = (hostname, opts, cb) => {
+  if (typeof opts === "function") { cb = opts; opts = {}; }
+  if (hostname && hostname.endsWith("supabase.co")) {
+    opts = Object.assign({}, typeof opts === "object" ? opts : {}, { family: 6 });
+  }
+  return _origLookup(hostname, opts, cb);
+};
+
 const pool = new Pool({
   connectionString: process.env.SUPABASE_DB_URL,
   ssl: { rejectUnauthorized: false },
   connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
-  max: 10,
-  family: 6
+  max: 10
 });
 
 pool.connect()
