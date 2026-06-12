@@ -106,7 +106,7 @@ async function loginByRole(req, res, role) {
   } catch (error) {
     console.error(`${role} login error:`, error.message);
     await logAuthEvent({ req, eventType: `${role.toUpperCase()}_LOGIN`, status: "FAILED", email: String(req.body?.email || "").trim().toLowerCase(), role, details: { reason: error.message } });
-    return res.status(500).json({ message: "Database error" });
+    return res.status(500).json({ message: "Database error", detail: error.message });
   }
 }
 
@@ -257,7 +257,7 @@ router.post("/doctor/login", async (req, res) => {
   } catch (error) {
     console.error("Doctor login error:", error.message);
     await logAuthEvent({ req, eventType: "DOCTOR_LOGIN", status: "FAILED", email: String(req.body?.email || "").trim().toLowerCase(), role: "Doctor", details: { reason: error.message } });
-    return res.status(500).json({ message: "Database error" });
+    return res.status(500).json({ message: "Database error", detail: error.message });
   }
 });
 

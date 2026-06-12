@@ -27,6 +27,20 @@ app.get("/", (req, res) => {
   res.send("Smart Clinic Backend is running");
 });
 
+// DB diagnostic endpoint
+app.get("/api/health", async (req, res) => {
+  const dbUrl = process.env.SUPABASE_DB_URL;
+  if (!dbUrl) {
+    return res.status(500).json({ ok: false, error: "SUPABASE_DB_URL environment variable is not set" });
+  }
+  try {
+    const rows = await db.queryAsync("SELECT 1 AS ok");
+    res.json({ ok: true, db: "connected", rows });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // Global error handler
 app.use((error, req, res, next) => {
   console.error("Unhandled error:", error);

@@ -121,7 +121,8 @@ async function handleAdminLogin(event) {
     const data = await res.json();
 
     if (!res.ok) {
-      showMessage(messageEl, data.message || 'Invalid credentials', 'danger');
+      const msg = data.detail ? `${data.message}: ${data.detail}` : (data.message || 'Invalid credentials');
+      showMessage(messageEl, msg, 'danger');
       return;
     }
 
