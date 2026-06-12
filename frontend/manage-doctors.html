@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Doctor Management | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+  <style>
+    /* ── Banner ───────────────────────────────────────── */
+    .dm-banner {
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 16px;
+      padding: 24px 28px;
+      color: #fff;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .dm-banner-icon {
+      width: 52px; height: 52px; flex-shrink: 0;
+      background: rgba(255,255,255,.18);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+    }
+    .dm-banner h1 { margin: 0; font-size: 1.35rem; font-weight: 700; }
+    .dm-banner p  { margin: 4px 0 0; font-size: .85rem; opacity: .82; }
+
+    /* ── Shared card shell ────────────────────────────── */
+    .dm-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      overflow: hidden;
+      margin-top: 24px;
+    }
+    .dm-card-head {
+      padding: 15px 22px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #f8fafc;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .dm-card-head-left { display: flex; align-items: center; gap: 10px; }
+    .dm-card-icon {
+      width: 34px; height: 34px; flex-shrink: 0;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .85rem;
+    }
+    .dm-card-head h2 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
+
+    /* total doctors pill */
+    .count-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 20px;
+      background: #f0fdfa; color: #0f766e;
+      border: 1px solid #99f6e4;
+      font-size: .8rem; font-weight: 700;
+    }
+    .count-pill i { font-size: .75rem; }
+
+    /* ── Add Doctor form body ─────────────────────────── */
+    .add-form-body { padding: 22px 24px; }
+    .add-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 20px;
+    }
+    @media (max-width: 560px) { .add-form-grid { grid-template-columns: 1fr; } }
+
+    .f-group { display: flex; flex-direction: column; gap: 5px; }
+    .f-group label {
+      font-size: .73rem; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .f-group input {
+      padding: 10px 13px;
+      border: 1px solid #e2e8f0; border-radius: 9px;
+      font-size: .9rem; font-family: inherit; color: #0f172a;
+      background: #f8fafc; box-sizing: border-box;
+    }
+    .f-group input:focus {
+      border-color: #0d9488; outline: none;
+      box-shadow: 0 0 0 3px rgba(13,148,136,.12); background: #fff;
+    }
+    .add-form-footer {
+      margin-top: 18px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .add-err { color: #dc2626; font-size: .83rem; min-height: 1.1em; flex: 1; }
+    .btn-add {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .9rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; gap: 7px;
+      white-space: nowrap;
+    }
+    .btn-add:hover { opacity: .9; }
+
+    /* ── Search bar ───────────────────────────────────── */
+    .dm-search {
+      display: flex; gap: 8px;
+      padding: 14px 22px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #fafcfd;
+    }
+    .dm-search input {
+      flex: 1; padding: 9px 14px;
+      border: 1px solid #e2e8f0; border-radius: 9px;
+      font-size: .88rem; font-family: inherit; color: #0f172a;
+      background: #fff;
+    }
+    .dm-search input:focus { border-color: #0d9488; outline: none; }
+    .dm-search button {
+      padding: 9px 18px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 9px;
+      font-size: .88rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ── Doctors table ────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    .dt { width: 100%; border-collapse: collapse; font-size: .88rem; min-width: 580px; }
+    .dt thead { background: linear-gradient(135deg, #0d9488, #0f766e); }
+    .dt thead th {
+      padding: 13px 16px; color: rgba(255,255,255,.92);
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; text-align: left; white-space: nowrap;
+    }
+    .dt tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .1s; }
+    .dt tbody tr:nth-child(even) { background: #f8fafc; }
+    .dt tbody tr:hover { background: #f0fdfa !important; }
+    .dt td { padding: 12px 16px; color: #1e293b; vertical-align: middle; }
+    .name-cell { font-weight: 700; color: #0f172a; }
+    .spec-badge {
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+      background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4;
+      font-size: .76rem; font-weight: 600;
+    }
+    .dt-empty {
+      text-align: center; padding: 44px 20px; color: #94a3b8;
+    }
+    .dt-empty i { font-size: 2rem; display: block; margin-bottom: 10px; }
+
+    /* ── Action buttons ───────────────────────────────── */
+    .act-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+    .btn-edit {
+      padding: 5px 11px; font-size: .76rem; font-weight: 600;
+      font-family: inherit; cursor: pointer; border-radius: 6px;
+      background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;
+    }
+    .btn-edit:hover { background: #e2e8f0; }
+    .btn-upd {
+      padding: 5px 11px; font-size: .76rem; font-weight: 600;
+      font-family: inherit; cursor: pointer; border-radius: 6px;
+      background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+      transition: background .12s, color .12s;
+    }
+    .btn-upd:hover { background: #1d4ed8; color: #fff; }
+    .btn-del {
+      padding: 5px 11px; font-size: .76rem; font-weight: 600;
+      font-family: inherit; cursor: pointer; border-radius: 6px;
+      background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+      transition: background .12s, color .12s;
+    }
+    .btn-del:hover { background: #dc2626; color: #fff; }
+
+    /* ── Update modal ─────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+      z-index: 9000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.22);
+      padding: 28px; width: 100%; max-width: 440px;
+      max-height: 90vh; overflow-y: auto;
+      animation: modal-in .2s ease;
+    }
+    @keyframes modal-in {
+      from { transform: scale(.95) translateY(-8px); opacity: 0; }
+      to   { transform: scale(1)   translateY(0);    opacity: 1; }
+    }
+    .modal-title {
+      display: flex; align-items: center; gap: 10px;
+      margin: 0 0 20px; font-size: 1.05rem; font-weight: 700; color: #0f172a;
+    }
+    .modal-title-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; color: #fff; font-size: .88rem;
+    }
+    .m-group { margin-bottom: 14px; }
+    .m-group label {
+      display: block; font-size: .76rem; font-weight: 600;
+      color: #475569; margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .m-group input {
+      width: 100%; padding: 9px 13px;
+      border: 1px solid #e2e8f0; border-radius: 9px;
+      font-size: .9rem; font-family: inherit; color: #0f172a;
+      background: #f8fafc; box-sizing: border-box;
+    }
+    .m-group input:focus {
+      border-color: #0d9488; outline: none;
+      box-shadow: 0 0 0 3px rgba(13,148,136,.12); background: #fff;
+    }
+    .m-acts { display: flex; gap: 10px; margin-top: 20px; }
+    .m-save {
+      flex: 1; padding: 10px 18px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 9px;
+      font-size: .9rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .m-cancel {
+      padding: 10px 18px; border: 1px solid #e2e8f0;
+      background: #f8fafc; color: #64748b; border-radius: 9px;
+      font-size: .9rem; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .m-cancel:hover { background: #f1f5f9; }
+    .m-err { color: #dc2626; font-size: .82rem; margin-top: 8px; min-height: 1em; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+  <h2><i class="fas fa-user-md" style="margin-right:8px;"></i>Doctor Management</h2>
+  <div>
+    <button onclick="window.location.href='index.html'">
+      <i class="fas fa-home"></i> Home
+    </button>
+    <button onclick="window.history.back()">
+      <i class="fas fa-arrow-left"></i> Back
+    </button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+
+  <!-- Banner -->
+  <div class="dm-banner">
+    <div class="dm-banner-icon"><i class="fas fa-user-md"></i></div>
+    <div>
+      <h1>Doctor Management</h1>
+      <p>Add, update, and remove doctors from the clinic system</p>
+    </div>
+  </div>
+
+  <!-- ── Add Doctor card ── -->
+  <div class="dm-card">
+    <div class="dm-card-head">
+      <div class="dm-card-head-left">
+        <div class="dm-card-icon"><i class="fas fa-user-plus"></i></div>
+        <h2>Add New Doctor</h2>
+      </div>
+    </div>
+
+    <div class="add-form-body">
+      <div class="add-form-grid">
+        <div class="f-group">
+          <label>Full Name</label>
+          <input id="name" placeholder="e.g. Dr. Ahmad bin Ali" />
+        </div>
+        <div class="f-group">
+          <label>Email Address</label>
+          <input id="email" type="email" placeholder="doctor@clinic.com" />
+        </div>
+        <div class="f-group">
+          <label>Password</label>
+          <input id="password" type="password" placeholder="Login password" />
+        </div>
+        <div class="f-group">
+          <label>Specialization</label>
+          <input id="spec" placeholder="e.g. General Medicine" />
+        </div>
+      </div>
+
+      <div class="add-form-footer">
+        <span id="addError" class="add-err"></span>
+        <button class="btn-add" onclick="addDoctor()">
+          <i class="fas fa-plus-circle"></i> Add Doctor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Doctors List card ── -->
+  <div class="dm-card">
+    <div class="dm-card-head">
+      <div class="dm-card-head-left">
+        <div class="dm-card-icon"><i class="fas fa-list"></i></div>
+        <h2>Doctors List</h2>
+      </div>
+      <span class="count-pill" id="doctorCount">
+        <i class="fas fa-circle-notch fa-spin"></i> Loading…
+      </span>
+    </div>
+
+    <div class="dm-search">
+      <input id="doctorSearch"
+             placeholder="Search by name, specialization, or email…"
+             onkeydown="if(event.key==='Enter') loadDoctors()" />
+      <button onclick="loadDoctors()">
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <div id="doctorList">
+        <div class="dt-empty">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading doctors…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /dashboard-container -->
+
+<!-- Update Modal -->
+<div id="updateModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 class="modal-title">
+      <span class="modal-title-icon"><i class="fas fa-edit"></i></span>
+      Update Doctor
+    </h3>
+    <input id="updateDoctorId" type="hidden">
+    <div class="m-group">
+      <label>Full Name</label>
+      <input id="updateName" placeholder="Doctor's full name">
+    </div>
+    <div class="m-group">
+      <label>Email Address</label>
+      <input id="updateEmail" type="email" placeholder="Email address">
+    </div>
+    <div class="m-group">
+      <label>Specialization</label>
+      <input id="updateSpec" placeholder="e.g. General Medicine">
+    </div>
+    <div class="m-group">
+      <label>New Password
+        <span style="font-weight:400;color:#94a3b8;">(leave blank to keep current)</span>
+      </label>
+      <input id="updatePassword" type="password" placeholder="New password">
+    </div>
+    <div id="updateError" class="m-err"></div>
+    <div class="m-acts">
+      <button class="m-save" onclick="saveUpdate()">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+      <button class="m-cancel" onclick="closeUpdateModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function requireAdmin() {
+  if (!localStorage.getItem("adminToken")) {
+    alert("Admin login required.");
+    window.location.href = "admin.html";
+    return false;
+  }
+  return true;
+}
+
+function authH(ct) {
+  const h = {};
+  const t = localStorage.getItem("adminToken") || "";
+  if (t) h.Authorization = "Bearer " + t;
+  if (ct) h["Content-Type"] = ct;
+  return h;
+}
+
+function escapeHtml(s) {
+  return String(s || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function loadDoctors() {
+  const q = (document.getElementById("doctorSearch").value || "").trim();
+  const url = "http://localhost:5000/api/doctors" +
+              (q ? "?search=" + encodeURIComponent(q) : "");
+
+  fetch(url, { headers: authH() })
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById("doctorList");
+      const countEl = document.getElementById("doctorCount");
+
+      if (!Array.isArray(data) || !data.length) {
+        el.innerHTML = '<div class="dt-empty"><i class="fas fa-user-slash"></i><p>No doctors found.</p></div>';
+        countEl.innerHTML = '<i class="fas fa-user-md"></i> 0 doctors';
+        return;
+      }
+
+      countEl.innerHTML = `<i class="fas fa-user-md"></i> ${data.length} doctor${data.length !== 1 ? "s" : ""}`;
+
+      let rows = "";
+      data.forEach(d => {
+        rows += `<tr>
+          <td style="text-align:center;font-weight:600;color:#64748b;width:52px;">${d.doctorId}</td>
+          <td class="name-cell">${escapeHtml(d.name)}</td>
+          <td><span class="spec-badge">${escapeHtml(d.specialization)}</span></td>
+          <td style="color:#475569;">${escapeHtml(d.email)}</td>
+          <td>
+            <div class="act-btns">
+              <button class="btn-edit" onclick="editDoctor(${d.doctorId})">
+                <i class="fas fa-pen-to-square"></i> Edit
+              </button>
+              <button class="btn-upd"
+                onclick='openUpdateModal(${d.doctorId},${JSON.stringify(d.name)},${JSON.stringify(d.email)},${JSON.stringify(d.specialization)})'>
+                <i class="fas fa-pen"></i> Update
+              </button>
+              <button class="btn-del" onclick="deleteDoctor(${d.doctorId})">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+          </td>
+        </tr>`;
+      });
+
+      el.innerHTML = `
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Specialization</th>
+              <th>Email</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    })
+    .catch(() => {
+      document.getElementById("doctorList").innerHTML =
+        '<div class="dt-empty"><i class="fas fa-exclamation-triangle"></i><p>Could not load doctors. Is the backend running?</p></div>';
+      document.getElementById("doctorCount").innerHTML =
+        '<i class="fas fa-exclamation-circle"></i> Error';
+    });
+}
+
+function addDoctor() {
+  const name     = document.getElementById("name").value.trim();
+  const email    = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const spec     = document.getElementById("spec").value.trim();
+  const errEl    = document.getElementById("addError");
+  errEl.textContent = "";
+  if (!name || !email || !password || !spec) {
+    errEl.textContent = "Please fill in all fields."; return;
+  }
+  if (!requireAdmin()) return;
+  fetch("http://localhost:5000/api/doctors", {
+    method: "POST",
+    headers: authH("application/json"),
+    body: JSON.stringify({ name, email, password, specialization: spec })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.message || data.id || data.doctorId) {
+      ["name","email","password","spec"].forEach(id =>
+        document.getElementById(id).value = "");
+      loadDoctors();
+    } else {
+      errEl.textContent = data.error || "Error adding doctor.";
+    }
+  })
+  .catch(() => { errEl.textContent = "Server error. Please try again."; });
+}
+
+function editDoctor(id) {
+  if (!requireAdmin()) return;
+  const name  = prompt("New name:");
+  if (name === null) return;
+  const spec  = prompt("New specialization:");
+  if (spec === null) return;
+  const email = prompt("New email:");
+  if (email === null) return;
+  fetch(`http://localhost:5000/api/doctors/${id}`, {
+    method: "PUT",
+    headers: authH("application/json"),
+    body: JSON.stringify({ name, specialization: spec, email })
+  })
+  .then(r => r.json())
+  .then(() => loadDoctors())
+  .catch(() => alert("Error updating doctor."));
+}
+
+function openUpdateModal(id, name, email, spec) {
+  document.getElementById("updateDoctorId").value    = id;
+  document.getElementById("updateName").value        = name;
+  document.getElementById("updateEmail").value       = email;
+  document.getElementById("updateSpec").value        = spec;
+  document.getElementById("updatePassword").value    = "";
+  document.getElementById("updateError").textContent = "";
+  document.getElementById("updateModal").classList.add("open");
+}
+
+function closeUpdateModal() {
+  document.getElementById("updateModal").classList.remove("open");
+}
+
+function saveUpdate() {
+  const id       = document.getElementById("updateDoctorId").value;
+  const name     = document.getElementById("updateName").value.trim();
+  const email    = document.getElementById("updateEmail").value.trim();
+  const spec     = document.getElementById("updateSpec").value.trim();
+  const password = document.getElementById("updatePassword").value.trim();
+  const errEl    = document.getElementById("updateError");
+  errEl.textContent = "";
+  if (!name || !email || !spec) {
+    errEl.textContent = "Name, email, and specialization are required."; return;
+  }
+  const body = { name, email, specialization: spec };
+  if (password) body.password = password;
+  fetch(`http://localhost:5000/api/doctors/${id}`, {
+    method: "PUT",
+    headers: authH("application/json"),
+    body: JSON.stringify(body)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.message || data.id) { closeUpdateModal(); loadDoctors(); }
+    else { errEl.textContent = data.error || "Error updating doctor."; }
+  })
+  .catch(() => { errEl.textContent = "Server error. Please try again."; });
+}
+
+function deleteDoctor(id) {
+  if (!confirm("Delete this doctor permanently? This cannot be undone.")) return;
+  fetch(`http://localhost:5000/api/doctors/${id}`, {
+    method: "DELETE",
+    headers: authH("application/json")
+  })
+  .then(r => r.json())
+  .then(() => loadDoctors())
+  .catch(() => alert("Error deleting doctor."));
+}
+
+document.getElementById("updateModal").addEventListener("click", function(e) {
+  if (e.target === this) closeUpdateModal();
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+  if (!localStorage.getItem("adminToken")) {
+    window.location.href = "admin.html"; return;
+  }
+  loadDoctors();
+});
+</script>
+
+<script src="script.js"></script>
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

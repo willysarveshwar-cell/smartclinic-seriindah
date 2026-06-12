@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <title>Doctor Portal | Smart Clinic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--primary-dark) 100%);
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-8);
+      margin: 0;
+      margin-top: var(--navbar-height);
+    }
+    
+    .auth-card {
+      background: var(--surface);
+      padding: var(--spacing-8);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      width: 100%;
+      max-width: 420px;
+    }
+    
+    .auth-card h2 {
+      font-size: var(--text-2xl);
+      margin-bottom: var(--spacing-2);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+    }
+    
+    .auth-card h2::before {
+      content: "";
+      display: block;
+      width: 4px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: var(--radius-full);
+    }
+    
+    .auth-subtitle {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--spacing-6);
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Smart Clinic - Doctor Portal</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="window.location.href='index.html'"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Back</button>
+  </nav>
+</header>
+
+<main class="main-content">
+  <div class="auth-card">
+    <h2><i class="fas fa-stethoscope"></i> Doctor Login</h2>
+    <p class="auth-subtitle">Access your clinic dashboard</p>
+    
+    <form id="doctorLoginForm" onsubmit="handleDoctorLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="email"><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="email" placeholder="Enter your doctor email" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" for="password"><i class="fas fa-lock"></i> Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required>
+      </div>
+      
+      <div class="form-checkbox">
+        <input type="checkbox" id="rememberMe">
+        <label for="rememberMe">Remember me on this device</label>
+      </div>
+      
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top: var(--spacing-6);">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </button>
+    </form>
+    
+    <div id="message"></div>
+  </div>
+</main>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Professional Healthcare Management.</p>
+</footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const rememberedEmail = localStorage.getItem("rememberedEmail");
+  if (rememberedEmail) {
+    document.getElementById("email").value = rememberedEmail;
+    document.getElementById("rememberMe").checked = true;
+  }
+});
+
+async function handleDoctorLogin(event) {
+  event.preventDefault();
+  
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const rememberMe = document.getElementById("rememberMe").checked;
+  const messageEl = document.getElementById("message");
+
+  try {
+    const res = await fetch("http://localhost:5000/api/admin/doctor/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(messageEl, data.message || 'Invalid credentials', 'danger');
+      return;
+    }
+
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", email);
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
+
+    localStorage.setItem("doctor", JSON.stringify(data.doctor));
+    localStorage.setItem("doctorToken", data.token || "");
+    
+    showMessage(messageEl, 'Login successful! Redirecting...', 'success');
+    setTimeout(() => window.location.href = "doctor-dashboard.html", 1500);
+
+  } catch (err) {
+    showMessage(messageEl, 'Server connection error', 'danger');
+  }
+}
+
+function showMessage(el, message, type) {
+  el.innerHTML = `<div class="alert alert-${type}" style="margin-top: var(--spacing-4);"><div class="alert-content"><p style="margin: 0;">${message}</p></div></div>`;
+}
+</script>
+</body>
+</html>

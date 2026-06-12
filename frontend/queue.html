@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8" />
+  <title>Live Queue | Smart Clinic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="stylesheet" href="dist/app.css" />
+</head>
+<body>
+
+<header class="navbar">
+  <h2>Live Queue</h2>
+  <nav style="display: flex; gap: 10px; align-items: center;">
+    <button type="button" onclick="goHome()">Home</button>
+    <button type="button" onclick="goAppointment()">Book Appointment</button>
+    <button type="button" onclick="goBack()">Back</button>
+  </nav>
+</header>
+
+<main class="queue-layout" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+  <header class="page-head" style="text-align: center; margin-bottom: 30px;">
+    <h1 class="page-title">Live Queue Status</h1>
+    <p class="lead">Real-time patient queue for today. Refreshes automatically.</p>
+  </header>
+
+  <div id="queueSummary" class="queue-summary" style="justify-content: center; margin-bottom: 30px;"></div>
+
+  <div class="table-scroll">
+    <table id="queueTable" class="table-live">
+      <thead>
+        <tr>
+          <th>Queue #</th>
+          <th>Patient Name</th>
+          <th>IC Number</th>
+          <th>Doctor</th>
+          <th>Appt. Time</th>
+          <th>Checked In</th>
+          <th>Status</th>
+          <th>Est. Wait</th>
+        </tr>
+      </thead>
+      <tbody id="queueBody">
+        <tr><td colspan="8" class="table-empty">Loading queue...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 Smart Clinic System</p>
+</footer>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  function goHome()        { window.location.href = "index.html"; }
+  function goBack()        { window.history.back(); }
+  function goAppointment() { window.location.href = "appointment.html"; }
+
+  const STATUS_CLASS = {
+    "Waiting": "status-waiting",
+    "In Progress": "status-in-progress",
+    "Completed": "status-completed",
+    "Cancelled": "status-cancelled"
+  };
+
+  function getAuthToken() {
+    return localStorage.getItem("adminToken") || localStorage.getItem("doctorToken") || localStorage.getItem("patientToken") || "";
+  }
+
+  async function apiFetch(url, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+      ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+
+    const res = await fetch(url, { ...options, headers });
+    return res;
+  }
+
+  async function loadQueue() {
+    try {
+      const res = await apiFetch("http://localhost:5000/api/queue");
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Please log in as Admin or Doctor to view live queue");
+      }
+      if (!res.ok) throw new Error("Server error");
+      const data = await res.json();
+
+      const tbody = document.getElementById("queueBody");
+      tbody.innerHTML = "";
+
+      const waiting    = data.filter(q => q.status === "Waiting").length;
+      const inProgress = data.filter(q => q.status === "In Progress").length;
+      const completed  = data.filter(q => q.status === "Completed").length;
+      document.getElementById("queueSummary").innerHTML = `
+        <div class="queue-pill queue-pill--waiting">Waiting: ${waiting}</div>
+        <div class="queue-pill queue-pill--progress">In progress: ${inProgress}</div>
+        <div class="queue-pill queue-pill--done">Completed: ${completed}</div>
+      `;
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="table-empty">No patients in queue today</td></tr>`;
+        return;
+      }
+
+      data.forEach((q) => {
+        const statusClass = STATUS_CLASS[q.status] || "status-waiting";
+        const waitMin = q.estimated_waiting_time_minutes != null ? `~${q.estimated_waiting_time_minutes} min` : "—";
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="queue-num">#${q.queue_number}</td>
+          <td style="font-weight:600;">${q.patient_name}</td>
+          <td style="color:var(--text-secondary);">${q.ic_number || "—"}</td>
+          <td>Dr. ${q.doctor_name || "Not Assigned"}</td>
+          <td>${q.appointment_time || "—"}</td>
+          <td>${q.check_in_confirmed ? "Yes" : "No"}</td>
+          <td><span class="${statusClass}">${q.status}</span></td>
+          <td style="color:var(--muted);">${waitMin}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+    } catch (err) {
+      document.getElementById("queueBody").innerHTML =
+        `<tr><td colspan="8" class="table-error">${err.message || "Failed to load queue. Is the backend running?"}</td></tr>`;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadQueue);
+
+  setInterval(loadQueue, 5000);
+
+  if (window.io) {
+    const socket = io("http://localhost:5000");
+    socket.on("queue:updated", loadQueue);
+  }
+</script>
+<script src="chatbot.js"></script>
+</body>
+</html>

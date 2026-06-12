@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Today's Appointments | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Smart Clinic</h2>
+  <div>
+    <button type="button" onclick="window.location.href='index.html'">Home</button>
+    <button type="button" onclick="window.history.back()">Back</button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+  <h1 class="page-title">Today's Appointments</h1>
+  <p class="lead">Overview of scheduled visits for today.</p>
+
+  <div class="table-scroll">
+    <table class="appointments-table">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="apptTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+
+<script>
+fetch("http://localhost:5000/api/appointments/today")
+  .then(res => {
+    if (!res.ok) {
+      throw new Error("Failed to load appointments");
+    }
+    return res.json();
+  })
+  .then(data => {
+    const tableBody = document.getElementById("apptTable");
+    tableBody.innerHTML = "";
+
+    if (!Array.isArray(data) || data.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="4" class="table-empty">No appointments for today</td></tr>`;
+      return;
+    }
+
+    data.forEach(a => {
+      tableBody.innerHTML += `
+        <tr>
+          <td>${a.patient_name}</td>
+          <td>${a.doctor_name || "Not assigned"}</td>
+          <td>${a.appointment_time}</td>
+          <td>${a.status}</td>
+        </tr>`;
+    });
+  })
+  .catch(() => {
+    const tableBody = document.getElementById("apptTable");
+    tableBody.innerHTML = `<tr><td colspan="4" class="table-error">Error loading appointments</td></tr>`;
+  });
+</script>
+</body>
+</html>

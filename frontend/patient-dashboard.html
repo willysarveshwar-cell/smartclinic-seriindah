@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Patient Dashboard | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Patient Dashboard</h2>
+  <div>
+    <button onclick="window.location.href='appointment.html'">Book Appointment</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+  <h2>Appointment History</h2>
+  <div id="historyContainer">Loading history...</div>
+
+  <h2 class="section-spaced">Medical Records</h2>
+  <div id="recordsContainer">Loading medical records...</div>
+</div>
+
+<div id="rescheduleModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Reschedule Appointment</h3>
+    <input id="rescheduleAppointmentId" type="hidden">
+    <label>Doctor</label>
+    <select id="rescheduleDoctor"></select>
+    <label>Date</label>
+    <input id="rescheduleDate" type="date">
+    <label>Time</label>
+    <input id="rescheduleTime" type="time">
+    <p id="rescheduleError" class="error-text" style="text-align:left;"></p>
+    <div class="modal-actions">
+      <button class="primary" onclick="saveReschedule()">Save</button>
+      <button onclick="closeRescheduleModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('patientToken');
+if (!token) {
+  window.location.href = 'patient-login.html';
+}
+
+let doctorOptions = [];
+
+async function loadDoctors() {
+  const res = await fetch('http://localhost:5000/api/doctors');
+  doctorOptions = await res.json();
+  const select = document.getElementById('rescheduleDoctor');
+  select.innerHTML = doctorOptions.map((doctor) =>
+    `<option value="${doctor.doctorId}">${doctor.name}</option>`
+  ).join('');
+}
+
+async function loadHistory() {
+  const res = await fetch('http://localhost:5000/api/patients/me/history', {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const data = await res.json();
+  const container = document.getElementById('historyContainer');
+  const recordsContainer = document.getElementById('recordsContainer');
+
+  if (!res.ok) {
+    container.innerHTML = `<p>${data.message || 'Failed to load history'}</p>`;
+    recordsContainer.innerHTML = `<p>${data.message || 'Failed to load records'}</p>`;
+    return;
+  }
+
+  if (!data.appointments || data.appointments.length === 0) {
+    container.innerHTML = '<p>No appointment history yet.</p>';
+    return;
+  }
+
+  let html = `
+    <table class="appointments-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Doctor</th>
+          <th>Queue #</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.appointments.forEach(row => {
+    const canManage = row.status === 'Waiting';
+    html += `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.appointment_date}</td>
+        <td>${row.appointment_time}</td>
+        <td>${row.doctor_name || 'N/A'}</td>
+        <td>${row.queue_number}</td>
+        <td>${row.status}</td>
+        <td>
+          ${canManage ? `<button onclick="openRescheduleModal(${row.id}, ${row.doctor_id || 0}, '${row.appointment_date}', '${String(row.appointment_time).slice(0, 5)}')">Reschedule</button>
+          <button onclick="cancelAppointment(${row.id})">Cancel</button>` : '-'}
+        </td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  if (!data.medicalRecords || data.medicalRecords.length === 0) {
+    recordsContainer.innerHTML = '<p>No medical records yet.</p>';
+    return;
+  }
+
+  let recordsHtml = `
+    <table class="appointments-table">
+      <thead>
+        <tr>
+          <th>Visit Date</th>
+          <th>Doctor</th>
+          <th>Diagnosis</th>
+          <th>Prescriptions</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  data.medicalRecords.forEach(record => {
+    recordsHtml += `
+      <tr>
+        <td>${record.visit_date || '-'}</td>
+        <td>${record.doctor_name || 'N/A'}</td>
+        <td>${record.diagnosis || '-'}</td>
+        <td>${record.prescriptions || '-'}</td>
+        <td>${record.notes || '-'}</td>
+      </tr>
+    `;
+  });
+
+  recordsHtml += '</tbody></table>';
+  recordsContainer.innerHTML = recordsHtml;
+}
+
+function logout() {
+  localStorage.removeItem('patientToken');
+  localStorage.removeItem('patientProfile');
+  window.location.href = 'patient-login.html';
+}
+
+function openRescheduleModal(id, doctorId, date, time) {
+  document.getElementById('rescheduleAppointmentId').value = id;
+  document.getElementById('rescheduleDoctor').value = String(doctorId || '');
+  document.getElementById('rescheduleDate').value = date || '';
+  document.getElementById('rescheduleTime').value = time || '';
+  document.getElementById('rescheduleError').textContent = '';
+  document.getElementById('rescheduleModal').classList.add('open');
+}
+
+function closeRescheduleModal() {
+  document.getElementById('rescheduleModal').classList.remove('open');
+}
+
+async function saveReschedule() {
+  const id = document.getElementById('rescheduleAppointmentId').value;
+  const body = {
+    action: 'reschedule',
+    doctor_id: Number(document.getElementById('rescheduleDoctor').value),
+    appointment_date: document.getElementById('rescheduleDate').value,
+    appointment_time: document.getElementById('rescheduleTime').value
+  };
+
+  const res = await fetch(`http://localhost:5000/api/appointments/${id}/patient`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById('rescheduleError').textContent = data.message || 'Failed to reschedule appointment';
+    return;
+  }
+
+  closeRescheduleModal();
+  loadHistory();
+}
+
+async function cancelAppointment(id) {
+  if (!confirm('Cancel this appointment?')) return;
+
+  const res = await fetch(`http://localhost:5000/api/appointments/${id}/patient`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ action: 'cancel' })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.message || 'Failed to cancel appointment');
+    return;
+  }
+
+  loadHistory();
+}
+
+document.getElementById('rescheduleModal').addEventListener('click', (event) => {
+  if (event.target.id === 'rescheduleModal') closeRescheduleModal();
+});
+
+loadDoctors().then(loadHistory);
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

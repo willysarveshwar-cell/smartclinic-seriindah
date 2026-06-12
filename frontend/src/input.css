@@ -1,0 +1,54 @@
+/* Fonts & icons: load via <link> in HTML (keeps build fast / offline-friendly) */
+/* Variables + legacy components (before @tailwind so :root is available) */
+@import "../style.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply m-0 flex min-h-screen flex-col font-sans antialiased;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+    background-color: var(--surface-elevated);
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% -30%, rgba(20, 184, 166, 0.14), transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, rgba(8, 145, 178, 0.08), transparent 50%),
+      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    background-attachment: fixed;
+  }
+
+  body > footer {
+    @apply mt-auto w-full;
+  }
+}
+
+@layer components {
+  .page-main,
+  main.container,
+  .container {
+    @apply mx-auto w-full max-w-clinic px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 pb-14 lg:pb-16;
+  }
+
+  .dashboard-container {
+    @apply mx-auto w-full max-w-clinic flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 pb-14 lg:pb-16;
+  }
+
+  .queue-layout {
+    @apply mx-auto w-full max-w-clinic-queue flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 pb-14 lg:pb-16;
+  }
+
+  .features {
+    @apply mx-auto w-full max-w-clinic px-4 pb-14 pt-4 sm:px-6 lg:px-8 lg:pb-16;
+  }
+
+  .hero {
+    @apply mx-auto w-full max-w-clinic;
+  }
+}
