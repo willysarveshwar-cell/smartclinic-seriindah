@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Manage Doctors | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    .doctors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-8);
+    }
+
+    .doctor-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .doctor-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .doctor-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .doctor-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-full);
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-inverse);
+      font-size: 1.5rem;
+      font-weight: var(--font-bold);
+      flex-shrink: 0;
+    }
+
+    .doctor-info h3 {
+      margin: 0 0 var(--spacing-1) 0;
+      font-size: var(--text-lg);
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+    }
+
+    .doctor-specialization {
+      color: var(--primary);
+      font-weight: var(--font-medium);
+      margin: 0 0 var(--spacing-2) 0;
+    }
+
+    .doctor-email {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      margin: 0;
+    }
+
+    .doctor-actions {
+      display: flex;
+      gap: var(--spacing-2);
+      margin-top: var(--spacing-4);
+    }
+
+    .add-doctor-form {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-8);
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-8);
+      border: 1px solid var(--border);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-6);
+    }
+
+    .search-section {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-6);
+      border: 1px solid var(--border);
+    }
+
+    .search-input-group {
+      display: flex;
+      gap: var(--spacing-3);
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: var(--spacing-3) var(--spacing-4);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: var(--spacing-4);
+      margin-bottom: var(--spacing-6);
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--surface-secondary);
+      padding: var(--spacing-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      color: var(--primary);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .stat-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-12);
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: var(--spacing-4);
+      opacity: 0.5;
+    }
+
+    /* ── Row/Card fade out animation ───────────────── */
+    @keyframes fade-out {
+      from { opacity: 1; transform: translateX(0) scale(1); }
+      to   { opacity: 0; transform: translateX(-20px) scale(0.95); }
+    }
+
+    @media (max-width: 768px) {
+      .doctors-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .search-input-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Doctor Management</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button class="btn btn-text" onclick="goPatients()"><i class="fas fa-users"></i> Patients</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Doctor Management</h1>
+    <p class="page-description">Manage clinic doctors, their specializations, and access credentials</p>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value" id="totalDoctors">0</div>
+      <p class="stat-label">Total Doctors</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="activeDoctors">0</div>
+      <p class="stat-label">Active Today</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="specializations">0</div>
+      <p class="stat-label">Specializations</p>
+    </div>
+  </div>
+
+  <!-- ADD DOCTOR FORM -->
+  <div class="add-doctor-form">
+    <h2 style="margin-bottom: var(--spacing-6);"><i class="fas fa-user-plus"></i> Add New Doctor</h2>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" for="name"><i class="fas fa-user"></i> Full Name</label>
+        <input id="name" type="text" placeholder="Enter doctor's full name" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email"><i class="fas fa-envelope"></i> Email Address</label>
+        <input id="email" type="email" placeholder="doctor@clinic.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password"><i class="fas fa-lock"></i> Password</label>
+        <input id="password" type="password" placeholder="Create secure password" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="spec"><i class="fas fa-stethoscope"></i> Specialization</label>
+        <select id="spec" required>
+          <option value="">Select specialization</option>
+          <option value="General Medicine">General Medicine</option>
+          <option value="Cardiology">Cardiology</option>
+          <option value="Dermatology">Dermatology</option>
+          <option value="Pediatrics">Pediatrics</option>
+          <option value="Orthopedics">Orthopedics</option>
+          <option value="Gynecology">Gynecology</option>
+          <option value="Neurology">Neurology</option>
+          <option value="Psychiatry">Psychiatry</option>
+          <option value="Ophthalmology">Ophthalmology</option>
+          <option value="Dentistry">Dentistry</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-lg" onclick="addDoctor()">
+      <i class="fas fa-plus"></i> Add Doctor
+    </button>
+  </div>
+
+  <!-- SEARCH SECTION -->
+  <div class="search-section">
+    <h3 style="margin-bottom: var(--spacing-4);"><i class="fas fa-search"></i> Search Doctors</h3>
+    <div class="search-input-group">
+      <input id="doctorSearch" type="text" placeholder="Search by name, specialization, or email..." class="search-input">
+      <button class="btn btn-primary" onclick="loadDoctors()">
+        <i class="fas fa-search"></i> Search
+      </button>
+      <button class="btn btn-secondary" onclick="clearSearch()">
+        <i class="fas fa-times"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- DOCTORS GRID -->
+  <div id="doctorsContainer">
+    <div class="empty-state">
+      <i class="fas fa-user-md"></i>
+      <h3>No doctors found</h3>
+      <p>Add your first doctor using the form above</p>
+    </div>
+  </div>
+</main>
+
+<!-- EDIT DOCTOR MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-edit"></i> Edit Doctor</h3>
+      <button class="modal-close" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="editName"><i class="fas fa-user"></i> Full Name</label>
+          <input id="editName" type="text" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editEmail"><i class="fas fa-envelope"></i> Email Address</label>
+          <input id="editEmail" type="email" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editSpec"><i class="fas fa-stethoscope"></i> Specialization</label>
+          <select id="editSpec" required>
+            <option value="General Medicine">General Medicine</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Orthopedics">Orthopedics</option>
+            <option value="Gynecology">Gynecology</option>
+            <option value="Neurology">Neurology</option>
+            <option value="Psychiatry">Psychiatry</option>
+            <option value="Ophthalmology">Ophthalmology</option>
+            <option value="Dentistry">Dentistry</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveEditBtn" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- AVAILABILITY MODAL -->
+<div class="modal-overlay" id="availabilityModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-clock"></i> Doctor Availability</h3>
+      <button class="modal-close" onclick="closeAvailabilityModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="availabilityBody">
+      <p>Set weekly availability slots. Times are 24-hour HH:MM. Leave blank to disable a day.</p>
+      <div id="availabilityForm">
+        <!-- generated rows -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAvailabilityModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveAvailabilityBtn" onclick="saveAvailability()">Save Availability</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEAVES MODAL -->
+<div class="modal-overlay" id="leavesModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-calendar-times"></i> Doctor Leaves</h3>
+      <button class="modal-close" onclick="closeLeavesModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="leavesBody">
+      <div id="leavesList"></div>
+      <hr>
+      <h4>Request New Leave</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="leaveStart">Start Date</label>
+          <input id="leaveStart" type="date">
+        </div>
+        <div class="form-group">
+          <label for="leaveEnd">End Date</label>
+          <input id="leaveEnd" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="leaveReason">Reason</label>
+        <textarea id="leaveReason" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLeavesModal()">Cancel</button>
+      <button class="btn btn-primary" id="submitLeaveBtn" onclick="submitLeave()">Submit Leave</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Secure doctor management portal.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+let currentEditId = null;
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function authHeaders(contentType = "application/json") {
+  const headers = {};
+  const token = getAdminToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  if (contentType) {
+    headers["Content-Type"] = contentType;
+  }
+  return headers;
+}
+
+function requireAdminLogin() {
+  if (!getAdminToken()) {
+    showMessage("Admin login required. Redirecting to login page.", "warning");
+    setTimeout(() => window.location.href = "admin-login.html", 2000);
+    return false;
+  }
+  return true;
+}
+
+async function loadDoctors() {
+  if (!requireAdminLogin()) return;
+
+  const doctorSearchInput = document.getElementById("doctorSearch");
+  const searchText = doctorSearchInput ? doctorSearchInput.value.trim() : "";
+  const query = searchText ? `?search=${encodeURIComponent(searchText)}` : "";
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors${query}`, {
+      headers: authHeaders("application/json")
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage("Failed to load doctors", "danger");
+      return;
+    }
+
+    updateStats(data);
+    renderDoctors(data);
+  } catch (err) {
+    console.error("Error loading doctors:", err);
+    showMessage("Error loading doctors. Please try again.", "danger");
+  }
+}
+
+function updateStats(doctors) {
+  const totalDoctors = doctors.length;
+  const specializations = [...new Set(doctors.map(d => d.specialization))].length;
+
+  document.getElementById("totalDoctors").textContent = totalDoctors;
+  document.getElementById("activeDoctors").textContent = totalDoctors; // Simplified
+  document.getElementById("specializations").textContent = specializations;
+}
+
+function renderDoctors(doctors) {
+  const container = document.getElementById("doctorsContainer");
+
+  if (doctors.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-user-md"></i>
+        <h3>No doctors found</h3>
+        <p>${document.getElementById("doctorSearch").value ? "Try adjusting your search terms" : "Add your first doctor using the form above"}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const doctorsGrid = `
+    <div class="doctors-grid">
+      ${doctors.map(doctor => `
+        <div class="doctor-card" data-doctor-id="${doctor.doctorId}">
+          <div class="doctor-header">
+            <div class="doctor-avatar">
+              ${doctor.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+            </div>
+            <div class="doctor-info">
+              <h3>${doctor.name}</h3>
+              <p class="doctor-specialization"><i class="fas fa-stethoscope"></i> ${doctor.specialization}</p>
+              <p class="doctor-email"><i class="fas fa-envelope"></i> ${doctor.email}</p>
+            </div>
+          </div>
+          <div class="doctor-actions">
+            <button class="btn btn-secondary btn-sm" onclick="editDoctor(${doctor.doctorId})">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="deleteDoctor(${doctor.doctorId})">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="openAvailabilityModal(${doctor.doctorId}, '${doctor.name.replace("'", "\\'")}')">
+              <i class="fas fa-clock"></i> Availability
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="openLeavesModal(${doctor.doctorId}, '${doctor.name.replace("'", "\\'")}')">
+              <i class="fas fa-calendar-times"></i> Leaves
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  container.innerHTML = doctorsGrid;
+}
+
+async function addDoctor() {
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const spec = document.getElementById("spec").value;
+
+  if (!name || !email || !password || !spec) {
+    showMessage("Please fill in all fields", "warning");
+    return;
+  }
+
+  if (!requireAdminLogin()) return;
+
+  try {
+    const res = await fetch("http://localhost:5000/api/doctors", {
+      method: "POST",
+      headers: authHeaders("application/json"),
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        password: password,
+        specialization: spec
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(data.message || "Error adding doctor", "danger");
+      return;
+    }
+
+    showMessage("Doctor added successfully!", "success");
+
+    // Clear form
+    document.getElementById("name").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("spec").value = "";
+
+    loadDoctors();
+  } catch (err) {
+    console.error("Error:", err);
+    showMessage("Server error. Please try again.", "danger");
+  }
+}
+
+function editDoctor(id) {
+  if (!requireAdminLogin()) return;
+
+  fetch(`http://localhost:5000/api/doctors/${id}`, {
+    headers: authHeaders("application/json")
+  })
+  .then(async res => {
+    if (res.status === 401 || res.status === 403) {
+      showMessage("Session expired. Redirecting to login.", "warning");
+      setTimeout(() => window.location.href = "admin-login.html", 1500);
+      throw new Error("Unauthorized");
+    }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Error loading doctor details");
+    }
+    return res.json();
+  })
+  .then(doctor => {
+    document.getElementById("editName").value = doctor.name;
+    document.getElementById("editEmail").value = doctor.email;
+    document.getElementById("editSpec").value = doctor.specialization;
+    currentEditId = id;
+    document.getElementById("editModal").classList.add("active");
+  })
+  .catch(err => {
+    console.error("Error loading doctor:", err);
+    showMessage(err.message || "Error loading doctor details", "danger");
+  });
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").classList.remove("active");
+  currentEditId = null;
+}
+
+async function saveEdit() {
+  if (!currentEditId) return;
+
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const spec = document.getElementById("editSpec").value;
+
+  if (!name || !email || !spec) {
+    showMessage("Please fill in all fields", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/${currentEditId}`, {
+      method: "PUT",
+      headers: authHeaders("application/json"),
+      body: JSON.stringify({
+        name: name,
+        specialization: spec,
+        email: email
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.status === 401 || res.status === 403) {
+      showMessage("Session expired. Redirecting to login.", "warning");
+      setTimeout(() => window.location.href = "admin-login.html", 1500);
+      return;
+    }
+
+    if (!res.ok) {
+      showMessage(data.message || "Error updating doctor", "danger");
+      return;
+    }
+
+    showMessage("Doctor updated successfully!", "success");
+    closeEditModal();
+    loadDoctors();
+  } catch (err) {
+    console.error("Error:", err);
+    showMessage("Server error. Please try again.", "danger");
+  }
+}
+
+async function deleteDoctor(id) {
+  if (!requireAdminLogin()) return;
+
+  if (!confirm("Are you sure you want to delete this doctor? This action cannot be undone.")) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/${id}`, {
+      method: "DELETE",
+      headers: authHeaders("application/json")
+    });
+
+    const data = await res.json();
+
+    if (res.status === 401 || res.status === 403) {
+      showMessage("Session expired. Redirecting to login.", "warning");
+      setTimeout(() => window.location.href = "admin-login.html", 1500);
+      return;
+    }
+
+    if (!res.ok) {
+      showMessage(data.message || "Error deleting doctor", "danger");
+      return;
+    }
+
+    // Remove the doctor card from the DOM immediately
+    const card = document.querySelector(`[data-doctor-id="${id}"]`);
+    if (card) {
+      card.style.animation = "fade-out 0.3s ease";
+      setTimeout(() => card.remove(), 300);
+    }
+    
+    // Update doctor count
+    const totalEl = document.getElementById("totalDoctors");
+    if (totalEl) {
+      const currentCount = parseInt(totalEl.textContent) || 0;
+      const newCount = Math.max(0, currentCount - 1);
+      totalEl.textContent = newCount;
+      
+      // Also update active doctors count
+      const activeEl = document.getElementById("activeDoctors");
+      if (activeEl) activeEl.textContent = newCount;
+    }
+
+    showMessage("Doctor deleted successfully from Smart Clinic and Supabase!", "success");
+  } catch (err) {
+    console.error("Error:", err);
+    showMessage("Server error. Please try again.", "danger");
+  }
+}
+
+let currentAvailabilityDoctorId = null;
+let currentLeavesDoctorId = null;
+
+async function openAvailabilityModal(doctorId, doctorName) {
+  if (!requireAdminLogin()) return;
+  currentAvailabilityDoctorId = doctorId;
+  const form = document.getElementById('availabilityForm');
+  form.innerHTML = '';
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  days.forEach((d, idx) => {
+    const dayWrap = document.createElement('div');
+    dayWrap.style.marginBottom = '12px';
+    dayWrap.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label style="font-weight:600">${d}</label>
+        <button type="button" class="btn btn-sm" onclick="addRangeRow(${idx})" style="padding:6px 8px;border-radius:4px;">Add range</button>
+      </div>
+      <div id="day_container_${idx}" class="ranges-container"></div>
+    `;
+    form.appendChild(dayWrap);
+  });
+
+  // Prefill with saved weekly availability if available
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/${doctorId}/availability/weekly`, { headers: authHeaders('application/json') });
+    if (res.ok) {
+      const rows = await res.json();
+      // rows may contain multiple ranges per day
+      const byDay = {};
+      rows.forEach(r => {
+        const day = Number(r.day_of_week);
+        if (!Array.isArray(byDay[day])) byDay[day] = [];
+        byDay[day].push(r);
+      });
+
+      for (let i = 0; i < 7; i++) {
+        const list = byDay[i] || [];
+        if (list.length === 0) {
+          addRangeRow(i); // default empty row
+        } else {
+          list.forEach(r => addRangeRow(i, r));
+        }
+      }
+    } else {
+      for (let i = 0; i < 7; i++) addRangeRow(i);
+    }
+  } catch (err) {
+    console.error('Error preloading availability:', err);
+    for (let i = 0; i < 7; i++) addRangeRow(i);
+  }
+
+  document.getElementById('availabilityModal').classList.add('active');
+}
+
+function closeAvailabilityModal() {
+  document.getElementById('availabilityModal').classList.remove('active');
+  currentAvailabilityDoctorId = null;
+}
+
+function addRangeRow(dayIndex, range) {
+  const container = document.getElementById(`day_container_${dayIndex}`);
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = 'range-row';
+  row.style.display = 'flex';
+  row.style.gap = '8px';
+  row.style.alignItems = 'center';
+  row.style.marginBottom = '6px';
+  const s = (range && range.start_time) ? String(range.start_time).slice(0,5) : '08:00';
+  const e = (range && range.end_time) ? String(range.end_time).slice(0,5) : '17:00';
+  const active = (range && Number(range.is_active) === 1) ? 'checked' : '';
+  row.innerHTML = `
+    <input class="start" type="time" value="${s}" style="width:120px;">
+    <input class="end" type="time" value="${e}" style="width:120px;">
+    <label style="display:flex;align-items:center;gap:6px;"><input class="active" type="checkbox" ${active}> Active</label>
+    <button type="button" class="btn btn-sm" onclick="this.closest('.range-row').remove()" style="margin-left:auto;padding:6px 8px;border-radius:4px;">Remove</button>
+  `;
+  container.appendChild(row);
+}
+
+async function saveAvailability() {
+  if (!currentAvailabilityDoctorId) return;
+  const slots = [];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  for (let i = 0; i < 7; i++) {
+    const container = document.getElementById(`day_container_${i}`);
+    if (!container) continue;
+    const rows = container.querySelectorAll('.range-row');
+    rows.forEach(r => {
+      const startTime = r.querySelector('.start').value;
+      const endTime = r.querySelector('.end').value;
+      const active = r.querySelector('.active').checked ? 1 : 0;
+      if (startTime && endTime) {
+        slots.push({ day_of_week: i, start_time: startTime, end_time: endTime, is_active: active });
+      }
+    });
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/${currentAvailabilityDoctorId}/availability`, {
+      method: 'PUT',
+      headers: authHeaders('application/json'),
+      body: JSON.stringify({ slots })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showMessage(data.message || 'Failed to save availability', 'danger');
+      return;
+    }
+    showMessage('Availability saved', 'success');
+    closeAvailabilityModal();
+  } catch (err) {
+    console.error('Error saving availability:', err);
+    showMessage('Server error saving availability', 'danger');
+  }
+}
+
+function openLeavesModal(doctorId, doctorName) {
+  if (!requireAdminLogin()) return;
+  currentLeavesDoctorId = doctorId;
+  document.getElementById('leaveStart').value = '';
+  document.getElementById('leaveEnd').value = '';
+  document.getElementById('leaveReason').value = '';
+  document.getElementById('leavesList').innerHTML = '<p>Loading...</p>';
+  document.getElementById('leavesModal').classList.add('active');
+  loadLeaves();
+}
+
+function closeLeavesModal() {
+  document.getElementById('leavesModal').classList.remove('active');
+  currentLeavesDoctorId = null;
+}
+
+async function loadLeaves() {
+  if (!currentLeavesDoctorId) return;
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/${currentLeavesDoctorId}/leaves`, {
+      headers: authHeaders('application/json')
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById('leavesList').innerHTML = '<p class="empty-state">Failed to load leaves</p>';
+      return;
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      document.getElementById('leavesList').innerHTML = '<p class="empty-state">No leave requests</p>';
+      return;
+    }
+    const html = data.map(l => {
+      const actions = (l.status === 'Pending') ? `
+          <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end;">
+            <button class="btn btn-sm" onclick="changeLeaveStatus(${l.id}, 'Approved')" style="background:#10b981;color:#fff;border:none;padding:6px 8px;border-radius:4px;">Approve</button>
+            <button class="btn btn-sm" onclick="changeLeaveStatus(${l.id}, 'Rejected')" style="background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:4px;">Reject</button>
+          </div>
+        ` : '';
+
+      return `
+      <div style="padding:10px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong>${l.start_date} → ${l.end_date}</strong>
+          <div style="color:var(--text-secondary);">${l.reason || '—'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:600;border-radius:4px;padding:6px 10px;background:#f3f4f6;">${l.status}</div>
+          ${actions}
+        </div>
+      </div>
+    `;
+    }).join('');
+    document.getElementById('leavesList').innerHTML = html;
+  } catch (err) {
+    console.error('Error loading leaves:', err);
+    document.getElementById('leavesList').innerHTML = '<p class="empty-state">Error loading leaves</p>';
+  }
+}
+
+async function submitLeave() {
+  if (!currentLeavesDoctorId) return;
+  const start = document.getElementById('leaveStart').value;
+  const end = document.getElementById('leaveEnd').value;
+  const reason = document.getElementById('leaveReason').value.trim();
+  if (!start || !end) {
+    showMessage('Please select start and end dates', 'warning');
+    return;
+  }
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/${currentLeavesDoctorId}/leaves`, {
+      method: 'POST',
+      headers: authHeaders('application/json'),
+      body: JSON.stringify({ start_date: start, end_date: end, reason })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showMessage(data.message || 'Failed to submit leave', 'danger');
+      return;
+    }
+    showMessage(data.message || 'Leave submitted', 'success');
+    loadLeaves();
+  } catch (err) {
+    console.error('Error submitting leave:', err);
+    showMessage('Server error submitting leave', 'danger');
+  }
+}
+
+async function changeLeaveStatus(leaveId, status) {
+  if (!leaveId) return;
+  try {
+    const res = await fetch(`http://localhost:5000/api/doctors/leaves/${leaveId}/status`, {
+      method: 'PUT',
+      headers: authHeaders('application/json'),
+      body: JSON.stringify({ status })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showMessage(data.message || 'Failed to update leave status', 'danger');
+      return;
+    }
+    showMessage(data.message || 'Leave status updated', 'success');
+    loadLeaves();
+  } catch (err) {
+    console.error('Error updating leave status:', err);
+    showMessage('Server error updating leave status', 'danger');
+  }
+}
+
+function clearSearch() {
+  document.getElementById("doctorSearch").value = "";
+  loadDoctors();
+}
+
+function showMessage(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 4000);
+}
+
+// Load doctors on page load
+loadDoctors();
+</script>
+</body>
+</html>

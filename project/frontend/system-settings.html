@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>System Settings | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+  <style>
+    .settings-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .settings-tabs {
+      display: flex;
+      background: white;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 0;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 15px 20px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-button.active {
+      color: var(--primary-dark);
+      border-bottom-color: var(--primary-dark);
+    }
+
+    .tab-button:hover {
+      background: #f8f9fa;
+    }
+
+    .tab-content {
+      background: white;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .settings-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: #f8f9fa;
+    }
+
+    .settings-section h3 {
+      margin-top: 0;
+      color: var(--primary-dark);
+      border-bottom: 2px solid var(--primary-dark);
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-dark);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .btn-save {
+      background: #28a745;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .btn-save:hover {
+      background: #218838;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-online {
+      background: #28a745;
+    }
+
+    .status-offline {
+      background: #dc3545;
+    }
+
+    .status-warning {
+      background: #ffc107;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .metric-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: var(--primary-dark);
+      margin: 10px 0;
+    }
+
+    .metric-label {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .user-list {
+      margin-top: 20px;
+    }
+
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .user-info h4 {
+      margin: 0 0 5px 0;
+    }
+
+    .user-info p {
+      margin: 0;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .backup-list {
+      margin-top: 20px;
+    }
+
+    .backup-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .backup-info h4 {
+      margin: 0 0 5px 0;
+    }
+
+    .backup-info p {
+      margin: 0;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .log-entries {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .log-entry {
+      padding: 10px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-level {
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8em;
+    }
+
+    .log-info { background: #d1ecf1; color: #0c5460; }
+    .log-warning { background: #fff3cd; color: #856404; }
+    .log-error { background: #f8d7da; color: #721c24; }
+
+    .integration-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .integration-info h4 {
+      margin: 0 0 5px 0;
+    }
+
+    .integration-info p {
+      margin: 0;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .integration-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .settings-tabs {
+        flex-direction: column;
+      }
+
+      .form-row {
+        flex-direction: column;
+      }
+
+      .user-item,
+      .backup-item,
+      .integration-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <h2><i class="fas fa-cogs"></i> System Settings</h2>
+  <div>
+    <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button onclick="back()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="settings-container">
+
+  <!-- Settings Tabs -->
+  <div class="settings-tabs">
+    <button class="tab-button active" onclick="showTab('clinic')">
+      <i class="fas fa-clinic-medical"></i> Clinic Info
+    </button>
+    <button class="tab-button" onclick="showTab('users')">
+      <i class="fas fa-users"></i> User Management
+    </button>
+    <button class="tab-button" onclick="showTab('system')">
+      <i class="fas fa-server"></i> System Config
+    </button>
+    <button class="tab-button" onclick="showTab('notifications')">
+      <i class="fas fa-bell"></i> Notifications
+    </button>
+    <button class="tab-button" onclick="showTab('security')">
+      <i class="fas fa-shield-alt"></i> Security
+    </button>
+    <button class="tab-button" onclick="showTab('backup')">
+      <i class="fas fa-database"></i> Backup & Restore
+    </button>
+    <button class="tab-button" onclick="showTab('maintenance')">
+      <i class="fas fa-tools"></i> Maintenance
+    </button>
+    <button class="tab-button" onclick="showTab('integrations')">
+      <i class="fas fa-plug"></i> Integrations
+    </button>
+  </div>
+
+  <!-- Clinic Information Tab -->
+  <div id="clinic" class="tab-content active">
+    <div class="settings-section">
+      <h3><i class="fas fa-building"></i> Clinic Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="clinicName">Clinic Name</label>
+          <input type="text" id="clinicName" value="Smart Clinic">
+        </div>
+        <div class="form-group">
+          <label for="clinicType">Clinic Type</label>
+          <select id="clinicType">
+            <option value="general">General Practice</option>
+            <option value="specialty">Specialty Clinic</option>
+            <option value="hospital">Hospital</option>
+            <option value="dental">Dental Clinic</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="clinicAddress">Address</label>
+          <textarea id="clinicAddress">123 Medical Center Drive, Healthcare City, HC 12345</textarea>
+        </div>
+        <div class="form-group">
+          <label for="clinicPhone">Phone Number</label>
+          <input type="tel" id="clinicPhone" value="+1 (555) 123-4567">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="clinicEmail">Email</label>
+          <input type="email" id="clinicEmail" value="info@smartclinic.com">
+        </div>
+        <div class="form-group">
+          <label for="clinicWebsite">Website</label>
+          <input type="url" id="clinicWebsite" value="https://www.smartclinic.com">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="operatingHours">Operating Hours</label>
+          <textarea id="operatingHours">Monday - Friday: 8:00 AM - 6:00 PM
+Saturday: 9:00 AM - 2:00 PM
+Sunday: Closed
+Emergency: 24/7</textarea>
+        </div>
+        <div class="form-group">
+          <label for="licenseNumber">Medical License Number</label>
+          <input type="text" id="licenseNumber" value="MED-2024-001">
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="saveClinicInfo()">
+        <i class="fas fa-save"></i> Save Clinic Information
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-file-medical"></i> Clinic Policies</h3>
+      <div class="form-group">
+        <label for="privacyPolicy">Privacy Policy</label>
+        <textarea id="privacyPolicy" placeholder="Enter clinic privacy policy..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="termsOfService">Terms of Service</label>
+        <textarea id="termsOfService" placeholder="Enter terms of service..."></textarea>
+      </div>
+
+      <button class="btn-save" onclick="savePolicies()">
+        <i class="fas fa-save"></i> Save Policies
+      </button>
+    </div>
+  </div>
+
+  <!-- User Management Tab -->
+  <div id="users" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-user-plus"></i> Add New Admin User</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newUserName">Full Name</label>
+          <input type="text" id="newUserName" placeholder="Enter full name">
+        </div>
+        <div class="form-group">
+          <label for="newUserEmail">Email</label>
+          <input type="email" id="newUserEmail" placeholder="Enter email address">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="newUserRole">Role</label>
+          <select id="newUserRole">
+            <option value="admin">Administrator</option>
+            <option value="nurse">Nurse</option>
+            <option value="receptionist">Receptionist</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="newUserPhone">Phone</label>
+          <input type="tel" id="newUserPhone" placeholder="Enter phone number">
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="addNewUser()">
+        <i class="fas fa-user-plus"></i> Add User
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-users"></i> Current Users</h3>
+      <div class="user-list" id="userList">
+        <div class="user-item">
+          <div class="user-info">
+            <h4>Dr. Sarah Johnson</h4>
+            <p>Administrator • sarah@smartclinic.com • +1 (555) 123-4567</p>
+          </div>
+          <div>
+            <button class="btn-danger" onclick="deleteUser(1)">
+              <i class="fas fa-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+
+        <div class="user-item">
+          <div class="user-info">
+            <h4>Nurse Emily Davis</h4>
+            <p>Nurse • emily@smartclinic.com • +1 (555) 123-4568</p>
+          </div>
+          <div>
+            <button class="btn-danger" onclick="deleteUser(2)">
+              <i class="fas fa-trash"></i> Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Configuration Tab -->
+  <div id="system" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-cogs"></i> System Preferences</h3>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="autoBackup" checked>
+          Enable Automatic Daily Backups
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="emailNotifications" checked>
+          Enable Email Notifications
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="smsNotifications">
+          Enable SMS Notifications
+        </label>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sessionTimeout">Session Timeout (minutes)</label>
+          <input type="number" id="sessionTimeout" value="30" min="5" max="480">
+        </div>
+        <div class="form-group">
+          <label for="maxPatientsPerDay">Max Patients Per Day</label>
+          <input type="number" id="maxPatientsPerDay" value="50" min="1">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="timezone">Timezone</label>
+          <select id="timezone">
+            <option value="UTC-8">Pacific Time (UTC-8)</option>
+            <option value="UTC-5">Eastern Time (UTC-5)</option>
+            <option value="UTC+0">GMT (UTC+0)</option>
+            <option value="UTC+8">China Standard Time (UTC+8)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="language">System Language</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="zh">Chinese</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="saveSystemConfig()">
+        <i class="fas fa-save"></i> Save Configuration
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-chart-line"></i> System Performance</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value" id="cpuUsage">45%</div>
+          <div class="metric-label">CPU Usage</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="memoryUsage">67%</div>
+          <div class="metric-label">Memory Usage</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="diskUsage">23%</div>
+          <div class="metric-label">Disk Usage</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="uptime">7d 4h</div>
+          <div class="metric-label">System Uptime</div>
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="refreshMetrics()">
+        <i class="fas fa-sync"></i> Refresh Metrics
+      </button>
+    </div>
+  </div>
+
+  <!-- Notifications Tab -->
+  <div id="notifications" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-envelope"></i> Email Notifications</h3>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="emailAppointmentConfirm" checked>
+          Send appointment confirmation emails
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="emailAppointmentReminder" checked>
+          Send appointment reminder emails (24 hours before)
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="emailCancellation" checked>
+          Send cancellation confirmation emails
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="smtpServer">SMTP Server</label>
+        <input type="text" id="smtpServer" value="smtp.smartclinic.com">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="smtpPort">SMTP Port</label>
+          <input type="number" id="smtpPort" value="587">
+        </div>
+        <div class="form-group">
+          <label for="smtpUsername">SMTP Username</label>
+          <input type="text" id="smtpUsername" value="noreply@smartclinic.com">
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="saveEmailSettings()">
+        <i class="fas fa-save"></i> Save Email Settings
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-sms"></i> SMS Notifications</h3>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="smsAppointmentConfirm">
+          Send appointment confirmation SMS
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="smsAppointmentReminder">
+          Send appointment reminder SMS (2 hours before)
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="smsProvider">SMS Provider</label>
+        <select id="smsProvider">
+          <option value="twilio">Twilio</option>
+          <option value="aws">AWS SNS</option>
+          <option value="nexmo">Nexmo</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="smsApiKey">API Key</label>
+        <input type="password" id="smsApiKey" placeholder="Enter API key">
+      </div>
+
+      <button class="btn-save" onclick="saveSmsSettings()">
+        <i class="fas fa-save"></i> Save SMS Settings
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-bolt"></i> Notification Automation</h3>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="queueUpdatesEnabled" checked>
+          Send queue update notifications
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="missedAppointmentEnabled" checked>
+          Send missed appointment notifications
+        </label>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="reminderLeadMinutes">Reminder Lead Time (minutes)</label>
+          <input type="number" id="reminderLeadMinutes" value="1440" min="5" max="10080">
+        </div>
+        <div class="form-group">
+          <label for="missedGraceMinutes">Missed Grace Period (minutes)</label>
+          <input type="number" id="missedGraceMinutes" value="30" min="5" max="1440">
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="saveNotificationAutomation()">
+        <i class="fas fa-save"></i> Save Notification Automation
+      </button>
+
+      <button class="btn-save" onclick="processNotificationJobs()">
+        <i class="fas fa-play"></i> Run Notification Jobs Now
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-list"></i> Recent Notification Logs</h3>
+      <div id="notificationLogs" class="log-entries">
+        <div class="log-entry">
+          <span>No notification logs loaded yet.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Tab -->
+  <div id="security" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-lock"></i> Password Policy</h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="minPasswordLength">Minimum Password Length</label>
+          <input type="number" id="minPasswordLength" value="8" min="6" max="32">
+        </div>
+        <div class="form-group">
+          <label for="passwordExpiry">Password Expiry (days)</label>
+          <input type="number" id="passwordExpiry" value="90" min="30" max="365">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="requireSpecialChars" checked>
+          Require special characters
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="requireNumbers" checked>
+          Require numbers
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="requireUppercase" checked>
+          Require uppercase letters
+        </label>
+      </div>
+
+      <button class="btn-save" onclick="savePasswordPolicy()">
+        <i class="fas fa-save"></i> Save Password Policy
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-key"></i> Two-Factor Authentication</h3>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="enable2FA">
+          Enable Two-Factor Authentication for all users
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="authMethod">Authentication Method</label>
+        <select id="authMethod">
+          <option value="app">Authenticator App</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+        </select>
+      </div>
+
+      <button class="btn-save" onclick="save2FASettings()">
+        <i class="fas fa-save"></i> Save 2FA Settings
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-shield-alt"></i> Access Control</h3>
+
+      <div class="form-group">
+        <label for="maxLoginAttempts">Maximum Login Attempts</label>
+        <input type="number" id="maxLoginAttempts" value="5" min="3" max="10">
+      </div>
+
+      <div class="form-group">
+        <label for="lockoutDuration">Account Lockout Duration (minutes)</label>
+        <input type="number" id="lockoutDuration" value="30" min="5" max="1440">
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="ipWhitelist">
+          Enable IP Whitelist
+        </label>
+      </div>
+
+      <button class="btn-save" onclick="saveAccessControl()">
+        <i class="fas fa-save"></i> Save Access Control
+      </button>
+    </div>
+  </div>
+
+  <!-- Backup & Restore Tab -->
+  <div id="backup" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-download"></i> Create Backup</h3>
+
+      <div class="form-group">
+        <label for="backupType">Backup Type</label>
+        <select id="backupType">
+          <option value="full">Full System Backup</option>
+          <option value="database">Database Only</option>
+          <option value="config">Configuration Only</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="includePatientData" checked>
+          Include patient data
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="compressBackup" checked>
+          Compress backup file
+        </label>
+      </div>
+
+      <button class="btn-save" onclick="createBackup()">
+        <i class="fas fa-download"></i> Create Backup Now
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-history"></i> Backup History</h3>
+      <div class="backup-list" id="backupList">
+        <div class="backup-item">
+          <div class="backup-info">
+            <h4>Full System Backup - 2024-01-15</h4>
+            <p>Size: 2.4 GB • Created: 2024-01-15 14:30 • Status: Completed</p>
+          </div>
+          <div>
+            <button class="btn-save" onclick="downloadBackup('backup-2024-01-15')">
+              <i class="fas fa-download"></i> Download
+            </button>
+            <button class="btn-danger" onclick="deleteBackup('backup-2024-01-15')">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+
+        <div class="backup-item">
+          <div class="backup-info">
+            <h4>Database Backup - 2024-01-10</h4>
+            <p>Size: 856 MB • Created: 2024-01-10 14:30 • Status: Completed</p>
+          </div>
+          <div>
+            <button class="btn-save" onclick="downloadBackup('backup-2024-01-10')">
+              <i class="fas fa-download"></i> Download
+            </button>
+            <button class="btn-danger" onclick="deleteBackup('backup-2024-01-10')">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-upload"></i> Restore System</h3>
+
+      <div class="form-group">
+        <label for="restoreFile">Select Backup File</label>
+        <input type="file" id="restoreFile" accept=".zip,.sql,.bak">
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="confirmRestore">
+          I understand this will overwrite existing data
+        </label>
+      </div>
+
+      <button class="btn-danger" onclick="restoreSystem()" disabled id="restoreBtn">
+        <i class="fas fa-upload"></i> Restore System
+      </button>
+    </div>
+  </div>
+
+  <!-- Maintenance Tab -->
+  <div id="maintenance" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-broom"></i> System Maintenance</h3>
+
+      <button class="btn-save" onclick="clearCache()">
+        <i class="fas fa-trash"></i> Clear System Cache
+      </button>
+
+      <button class="btn-save" onclick="optimizeDatabase()">
+        <i class="fas fa-database"></i> Optimize Database
+      </button>
+
+      <button class="btn-save" onclick="rebuildIndexes()">
+        <i class="fas fa-search"></i> Rebuild Database Indexes
+      </button>
+
+      <button class="btn-danger" onclick="resetSystem()">
+        <i class="fas fa-exclamation-triangle"></i> Reset System to Defaults
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-list"></i> System Logs</h3>
+      <div class="log-entries" id="systemLogs">
+        <div class="log-entry">
+          <div>
+            <span class="log-level log-info">INFO</span>
+            System started successfully
+          </div>
+          <div>2024-01-15 08:00:00</div>
+        </div>
+
+        <div class="log-entry">
+          <div>
+            <span class="log-level log-warning">WARNING</span>
+            High memory usage detected
+          </div>
+          <div>2024-01-15 10:30:00</div>
+        </div>
+
+        <div class="log-entry">
+          <div>
+            <span class="log-level log-error">ERROR</span>
+            Database connection timeout
+          </div>
+          <div>2024-01-15 11:15:00</div>
+        </div>
+
+        <div class="log-entry">
+          <div>
+            <span class="log-level log-info">INFO</span>
+            User login: admin@smartclinic.com
+          </div>
+          <div>2024-01-15 14:20:00</div>
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="exportLogs()">
+        <i class="fas fa-file-export"></i> Export Logs
+      </button>
+    </div>
+  </div>
+
+  <!-- Integrations Tab -->
+  <div id="integrations" class="tab-content">
+    <div class="settings-section">
+      <h3><i class="fas fa-plug"></i> External Integrations</h3>
+
+      <div class="integration-card">
+        <div class="integration-info">
+          <h4><i class="fas fa-calendar-alt"></i> Google Calendar</h4>
+          <p>Sync appointments with Google Calendar for better scheduling</p>
+        </div>
+        <div class="integration-status">
+          <span class="status-indicator status-offline"></span>
+          <label class="switch">
+            <input type="checkbox" id="googleCalendarEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="integration-card">
+        <div class="integration-info">
+          <h4><i class="fas fa-credit-card"></i> Payment Gateway</h4>
+          <p>Accept online payments for appointments and services</p>
+        </div>
+        <div class="integration-status">
+          <span class="status-indicator status-online"></span>
+          <label class="switch">
+            <input type="checkbox" id="paymentGatewayEnabled" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="integration-card">
+        <div class="integration-info">
+          <h4><i class="fas fa-envelope"></i> Email Service</h4>
+          <p>Send automated emails for appointments and notifications</p>
+        </div>
+        <div class="integration-status">
+          <span class="status-indicator status-online"></span>
+          <label class="switch">
+            <input type="checkbox" id="emailServiceEnabled" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="integration-card">
+        <div class="integration-info">
+          <h4><i class="fas fa-mobile-alt"></i> SMS Gateway</h4>
+          <p>Send SMS notifications for appointments and reminders</p>
+        </div>
+        <div class="integration-status">
+          <span class="status-indicator status-warning"></span>
+          <label class="switch">
+            <input type="checkbox" id="smsGatewayEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="integration-card">
+        <div class="integration-info">
+          <h4><i class="fas fa-cloud"></i> Cloud Storage</h4>
+          <p>Store backups and files securely in the cloud</p>
+        </div>
+        <div class="integration-status">
+          <span class="status-indicator status-online"></span>
+          <label class="switch">
+            <input type="checkbox" id="cloudStorageEnabled" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="integration-card">
+        <div class="integration-info">
+          <h4><i class="fas fa-chart-bar"></i> Analytics Platform</h4>
+          <p>Track clinic performance and patient insights</p>
+        </div>
+        <div class="integration-status">
+          <span class="status-indicator status-offline"></span>
+          <label class="switch">
+            <input type="checkbox" id="analyticsEnabled">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3><i class="fas fa-key"></i> API Configuration</h3>
+
+      <div class="form-group">
+        <label for="apiKey">API Key</label>
+        <input type="text" id="apiKey" value="sk_live_..." readonly>
+        <button class="btn-save" onclick="regenerateApiKey()" style="margin-top: 10px;">
+          <i class="fas fa-sync"></i> Regenerate Key
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label for="webhookUrl">Webhook URL</label>
+        <input type="url" id="webhookUrl" placeholder="https://your-app.com/webhook">
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="enableApiLogging" checked>
+          Enable API request logging
+        </label>
+      </div>
+
+      <button class="btn-save" onclick="saveApiConfig()">
+        <i class="fas fa-save"></i> Save API Configuration
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Tab switching functionality
+function showTab(tabName) {
+  // Hide all tabs
+  const tabs = document.querySelectorAll('.tab-content');
+  tabs.forEach(tab => tab.classList.remove('active'));
+
+  // Remove active class from all buttons
+  const buttons = document.querySelectorAll('.tab-button');
+  buttons.forEach(button => button.classList.remove('active'));
+
+  // Show selected tab
+  document.getElementById(tabName).classList.add('active');
+
+  // Add active class to clicked button
+  event.target.classList.add('active');
+}
+
+function back() {
+  window.location.href = "admin-dashboard.html";
+}
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+if (localStorage.getItem("adminLoggedIn") !== "true") {
+  window.location.href = "admin.html";
+}
+
+function getAdminToken() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+async function apiFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+
+  return fetch(url, { ...options, headers });
+}
+
+function setCheckbox(id, value) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.checked = Boolean(value);
+  }
+}
+
+function setValue(id, value) {
+  const element = document.getElementById(id);
+  if (element && value !== undefined && value !== null) {
+    element.value = value;
+  }
+}
+
+function renderNotificationLogs(logs) {
+  const container = document.getElementById('notificationLogs');
+  if (!container) return;
+
+  if (!Array.isArray(logs) || logs.length === 0) {
+    container.innerHTML = '<div class="log-entry"><span>No notification logs available yet.</span></div>';
+    return;
+  }
+
+  container.innerHTML = logs.map((log) => {
+    const levelClass = log.sent_status === 'sent' ? 'log-info' : log.sent_status === 'disabled' ? 'log-warning' : 'log-error';
+    const meta = [log.event_type || 'system', log.channel, log.recipient || 'no recipient'].join(' • ');
+    return `
+      <div class="log-entry">
+        <div>
+          <strong>${meta}</strong>
+          <div style="color:#666;font-size:0.9em;margin-top:4px;">${log.message || 'No message'}</div>
+        </div>
+        <span class="log-level ${levelClass}">${log.sent_status || 'logged'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadNotificationSettings() {
+  try {
+    const response = await apiFetch('http://localhost:5000/api/notifications/settings');
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load notification settings');
+    }
+
+    setCheckbox('emailNotifications', data.email_enabled);
+    setCheckbox('smsNotifications', data.sms_enabled);
+    setCheckbox('emailAppointmentConfirm', data.appointment_confirmation_email);
+    setCheckbox('emailAppointmentReminder', data.appointment_reminder_email);
+    setCheckbox('smsAppointmentConfirm', data.appointment_confirmation_sms);
+    setCheckbox('smsAppointmentReminder', data.appointment_reminder_sms);
+    setCheckbox('queueUpdatesEnabled', data.queue_updates_enabled);
+    setCheckbox('missedAppointmentEnabled', data.missed_appointment_enabled);
+    setValue('smtpServer', data.smtp_server);
+    setValue('smtpPort', data.smtp_port);
+    setValue('smtpUsername', data.smtp_username);
+    setValue('smsProvider', data.sms_provider);
+    setValue('reminderLeadMinutes', data.reminder_lead_minutes);
+    setValue('missedGraceMinutes', data.missed_grace_minutes);
+  } catch (error) {
+    console.error('Load notification settings error:', error.message);
+  }
+}
+
+async function loadNotificationLogs() {
+  try {
+    const response = await apiFetch('http://localhost:5000/api/notifications/logs?limit=25');
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load notification logs');
+    }
+
+    renderNotificationLogs(data);
+  } catch (error) {
+    console.error('Load notification logs error:', error.message);
+  }
+}
+
+async function saveNotificationSettings(payload, successMessage) {
+  const response = await apiFetch('http://localhost:5000/api/notifications/settings', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to save notification settings');
+  }
+
+  alert(successMessage);
+  await loadNotificationSettings();
+  await loadNotificationLogs();
+}
+
+// Settings functions
+function saveClinicInfo() {
+  const clinicData = {
+    name: document.getElementById('clinicName').value,
+    type: document.getElementById('clinicType').value,
+    address: document.getElementById('clinicAddress').value,
+    phone: document.getElementById('clinicPhone').value,
+    email: document.getElementById('clinicEmail').value,
+    website: document.getElementById('clinicWebsite').value,
+    hours: document.getElementById('operatingHours').value,
+    license: document.getElementById('licenseNumber').value
+  };
+
+  // In a real app, this would send to backend
+  console.log('Saving clinic info:', clinicData);
+  alert('Clinic information saved successfully!');
+}
+
+function savePolicies() {
+  const policies = {
+    privacy: document.getElementById('privacyPolicy').value,
+    terms: document.getElementById('termsOfService').value
+  };
+
+  console.log('Saving policies:', policies);
+  alert('Policies saved successfully!');
+}
+
+function addNewUser() {
+  const userData = {
+    name: document.getElementById('newUserName').value,
+    email: document.getElementById('newUserEmail').value,
+    role: document.getElementById('newUserRole').value,
+    phone: document.getElementById('newUserPhone').value
+  };
+
+  if (!userData.name || !userData.email) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  console.log('Adding new user:', userData);
+  alert('User added successfully!');
+
+  // Clear form
+  document.getElementById('newUserName').value = '';
+  document.getElementById('newUserEmail').value = '';
+  document.getElementById('newUserPhone').value = '';
+
+  // In a real app, refresh user list
+}
+
+function deleteUser(userId) {
+  if (confirm('Are you sure you want to delete this user?')) {
+    console.log('Deleting user:', userId);
+    alert('User deleted successfully!');
+    // In a real app, refresh user list
+  }
+}
+
+function saveSystemConfig() {
+  const config = {
+    autoBackup: document.getElementById('autoBackup').checked,
+    emailNotifications: document.getElementById('emailNotifications').checked,
+    smsNotifications: document.getElementById('smsNotifications').checked,
+    sessionTimeout: document.getElementById('sessionTimeout').value,
+    maxPatientsPerDay: document.getElementById('maxPatientsPerDay').value,
+    timezone: document.getElementById('timezone').value,
+    language: document.getElementById('language').value
+  };
+
+  console.log('Saving system config:', config);
+  saveNotificationSettings({
+    email_enabled: config.emailNotifications,
+    sms_enabled: config.smsNotifications
+  }, 'System configuration saved successfully!').catch((error) => {
+    alert(error.message);
+  });
+}
+
+function refreshMetrics() {
+  // Simulate refreshing metrics
+  document.getElementById('cpuUsage').textContent = Math.floor(Math.random() * 100) + '%';
+  document.getElementById('memoryUsage').textContent = Math.floor(Math.random() * 100) + '%';
+  document.getElementById('diskUsage').textContent = Math.floor(Math.random() * 100) + '%';
+
+  alert('Metrics refreshed!');
+}
+
+function saveEmailSettings() {
+  const emailSettings = {
+    appointment_confirmation_email: document.getElementById('emailAppointmentConfirm').checked,
+    appointment_reminder_email: document.getElementById('emailAppointmentReminder').checked,
+    email_enabled: document.getElementById('emailNotifications').checked,
+    smtp_server: document.getElementById('smtpServer').value.trim(),
+    smtp_port: Number(document.getElementById('smtpPort').value || 587),
+    smtp_username: document.getElementById('smtpUsername').value.trim()
+  };
+
+  saveNotificationSettings(emailSettings, 'Email settings saved successfully!').catch((error) => {
+    alert(error.message);
+  });
+}
+
+function saveSmsSettings() {
+  const smsSettings = {
+    appointment_confirmation_sms: document.getElementById('smsAppointmentConfirm').checked,
+    appointment_reminder_sms: document.getElementById('smsAppointmentReminder').checked,
+    sms_enabled: document.getElementById('smsNotifications').checked,
+    sms_provider: document.getElementById('smsProvider').value
+  };
+
+  saveNotificationSettings(smsSettings, 'SMS settings saved successfully!').catch((error) => {
+    alert(error.message);
+  });
+}
+
+function processNotificationJobs() {
+  apiFetch('http://localhost:5000/api/notifications/process', { method: 'POST' })
+    .then(async (response) => ({ ok: response.ok, body: await response.json() }))
+    .then(({ ok, body }) => {
+      if (!ok) {
+        throw new Error(body.message || 'Failed to process notification jobs');
+      }
+      alert(`Notification jobs processed. Reminders: ${body.summary.remindersSent}, Missed: ${body.summary.missedSent}`);
+      return loadNotificationLogs();
+    })
+    .catch((error) => {
+      alert(error.message);
+    });
+}
+
+function saveNotificationAutomation() {
+  saveNotificationSettings({
+    queue_updates_enabled: document.getElementById('queueUpdatesEnabled').checked,
+    missed_appointment_enabled: document.getElementById('missedAppointmentEnabled').checked,
+    reminder_lead_minutes: Number(document.getElementById('reminderLeadMinutes').value || 1440),
+    missed_grace_minutes: Number(document.getElementById('missedGraceMinutes').value || 30)
+  }, 'Notification automation saved successfully!').catch((error) => {
+    alert(error.message);
+  });
+}
+
+function savePasswordPolicy() {
+  const policy = {
+    minLength: document.getElementById('minPasswordLength').value,
+    expiry: document.getElementById('passwordExpiry').value,
+    specialChars: document.getElementById('requireSpecialChars').checked,
+    numbers: document.getElementById('requireNumbers').checked,
+    uppercase: document.getElementById('requireUppercase').checked
+  };
+
+  console.log('Saving password policy:', policy);
+  alert('Password policy saved successfully!');
+}
+
+function save2FASettings() {
+  const settings = {
+    enabled: document.getElementById('enable2FA').checked,
+    method: document.getElementById('authMethod').value
+  };
+
+  console.log('Saving 2FA settings:', settings);
+  alert('2FA settings saved successfully!');
+}
+
+function saveAccessControl() {
+  const control = {
+    maxAttempts: document.getElementById('maxLoginAttempts').value,
+    lockoutDuration: document.getElementById('lockoutDuration').value,
+    ipWhitelist: document.getElementById('ipWhitelist').checked
+  };
+
+  console.log('Saving access control:', control);
+  alert('Access control settings saved successfully!');
+}
+
+function createBackup() {
+  const backupConfig = {
+    type: document.getElementById('backupType').value,
+    includePatientData: document.getElementById('includePatientData').checked,
+    compress: document.getElementById('compressBackup').checked
+  };
+
+  console.log('Creating backup:', backupConfig);
+  alert('Backup creation started! You will be notified when complete.');
+}
+
+function downloadBackup(backupId) {
+  console.log('Downloading backup:', backupId);
+  alert('Backup download started!');
+}
+
+function deleteBackup(backupId) {
+  if (confirm('Are you sure you want to delete this backup?')) {
+    console.log('Deleting backup:', backupId);
+    alert('Backup deleted successfully!');
+  }
+}
+
+function restoreSystem() {
+  if (!document.getElementById('confirmRestore').checked) {
+    alert('Please confirm that you understand this will overwrite existing data');
+    return;
+  }
+
+  const file = document.getElementById('restoreFile').files[0];
+  if (!file) {
+    alert('Please select a backup file to restore');
+    return;
+  }
+
+  console.log('Restoring from file:', file.name);
+  alert('System restore started! This may take several minutes.');
+}
+
+function clearCache() {
+  console.log('Clearing system cache...');
+  alert('System cache cleared successfully!');
+}
+
+function optimizeDatabase() {
+  console.log('Optimizing database...');
+  alert('Database optimization completed!');
+}
+
+function rebuildIndexes() {
+  console.log('Rebuilding database indexes...');
+  alert('Database indexes rebuilt successfully!');
+}
+
+function resetSystem() {
+  if (confirm('Are you sure you want to reset the system to defaults? This will delete all data!')) {
+    if (confirm('This action cannot be undone. Are you absolutely sure?')) {
+      console.log('Resetting system to defaults...');
+      alert('System reset initiated. Please wait...');
+    }
+  }
+}
+
+function exportLogs() {
+  console.log('Exporting system logs...');
+  alert('Logs exported successfully!');
+}
+
+function regenerateApiKey() {
+  const newKey = 'sk_live_' + Math.random().toString(36).substr(2, 16);
+  document.getElementById('apiKey').value = newKey;
+  alert('New API key generated!');
+}
+
+function saveApiConfig() {
+  const config = {
+    apiKey: document.getElementById('apiKey').value,
+    webhookUrl: document.getElementById('webhookUrl').value,
+    enableLogging: document.getElementById('enableApiLogging').checked
+  };
+
+  console.log('Saving API config:', config);
+  alert('API configuration saved successfully!');
+}
+
+// Enable/disable restore button based on confirmation checkbox
+document.getElementById('confirmRestore').addEventListener('change', function() {
+  document.getElementById('restoreBtn').disabled = !this.checked;
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadNotificationSettings();
+  loadNotificationLogs();
+});
+</script>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

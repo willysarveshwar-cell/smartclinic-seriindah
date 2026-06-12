@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Patient Dashboard | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Patient Dashboard</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="window.location.href='appointment.html'"><i class="fas fa-calendar-plus"></i> Book Appointment</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Your Medical Journey</h1>
+    <p class="page-description">View your appointment history, medical records, and manage your healthcare</p>
+  </div>
+
+  <!-- QUICK STATS -->
+  <section class="section">
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-calendar-check"></i> Upcoming Appointments</div>
+        <div class="stat-value" id="upcomingCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-history"></i> Past Visits</div>
+        <div class="stat-value" id="pastCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-file-medical"></i> Medical Records</div>
+        <div class="stat-value" id="recordsCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="fas fa-user-doctor"></i> Total Doctors</div>
+        <div class="stat-value" id="doctorsCount">0</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPOINTMENTS SECTION -->
+  <section class="section">
+    <h2 class="section-title">Appointment History</h2>
+    <p class="section-subtitle">Manage and track your medical appointments</p>
+    
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <input type="text" id="filterAppointment" class="toolbar-search" placeholder="Search by doctor name..." style="flex: 1; max-width: 250px;">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadAppointments()"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="appointmentsTable">
+        <thead>
+          <tr>
+            <th><i class="fas fa-hashtag"></i> ID</th>
+            <th><i class="fas fa-calendar"></i> Date</th>
+            <th><i class="fas fa-clock"></i> Time</th>
+            <th><i class="fas fa-user-doctor"></i> Doctor</th>
+            <th><i class="fas fa-list-ol"></i> Queue #</th>
+            <th><i class="fas fa-tag"></i> Status</th>
+            <th><i class="fas fa-cog"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentsList">
+          <tr><td colspan="7" style="text-align: center; padding: var(--spacing-6);"><i class="fas fa-spinner fa-spin"></i> Loading appointments...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MEDICAL RECORDS SECTION -->
+  <section class="section">
+    <h2 class="section-title">Medical Records</h2>
+    <p class="section-subtitle">Your complete medical history and visit notes</p>
+    
+    <div class="table-wrapper">
+      <table id="recordsTable">
+        <thead>
+          <tr>
+            <th><i class="fas fa-calendar"></i> Visit Date</th>
+            <th><i class="fas fa-user-doctor"></i> Doctor</th>
+            <th><i class="fas fa-stethoscope"></i> Diagnosis</th>
+            <th><i class="fas fa-prescription-bottle"></i> Prescriptions</th>
+            <th><i class="fas fa-notes-medical"></i> Notes</th>
+          </tr>
+        </thead>
+        <tbody id="recordsList">
+          <tr><td colspan="5" style="text-align: center; padding: var(--spacing-6);"><i class="fas fa-spinner fa-spin"></i> Loading records...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- RESCHEDULE MODAL -->
+<div class="modal-overlay" id="rescheduleModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Reschedule Appointment</h3>
+      <button class="modal-close" onclick="closeRescheduleModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input id="rescheduleAppointmentId" type="hidden">
+      
+      <div class="form-group">
+        <label class="form-label">Doctor</label>
+        <select id="rescheduleDoctor" required></select>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input id="rescheduleDate" type="date" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Time</label>
+        <input id="rescheduleTime" type="time" required>
+      </div>
+      
+      <div id="rescheduleError"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRescheduleModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReschedule()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Your Health, Our Priority.</p>
+</footer>
+
+<script>
+const token = localStorage.getItem('patientToken');
+if (!token) {
+  window.location.href = 'patient-login.html';
+}
+
+let doctorOptions = [];
+
+async function loadDoctors() {
+  try {
+    const res = await fetch('http://localhost:5000/api/doctors');
+    doctorOptions = await res.json();
+    const select = document.getElementById('rescheduleDoctor');
+    select.innerHTML = doctorOptions.map((doctor) =>
+      `<option value="${doctor.doctorId}">${doctor.name}</option>`
+    ).join('');
+  } catch (err) {
+    console.error('Failed to load doctors:', err);
+  }
+}
+
+async function loadAppointments() {
+  try {
+    const res = await fetch(`http://localhost:5000/api/patients/me/history`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await res.json();
+    
+    if (!res.ok) {
+      document.getElementById('appointmentsList').innerHTML = `
+        <tr><td colspan="7" style="text-align: center; color: var(--danger); padding: var(--spacing-4);">
+          <i class="fas fa-exclamation-circle"></i> ${data.message || 'Failed to load appointments'}
+        </td></tr>
+      `;
+      return;
+    }
+
+    if (!data.appointments || data.appointments.length === 0) {
+      document.getElementById('appointmentsList').innerHTML = `
+        <tr><td colspan="7" style="text-align: center; padding: var(--spacing-6);">
+          <i class="fas fa-inbox"></i> No appointments yet. <a href="appointment.html" style="color: var(--primary);">Book one now!</a>
+        </td></tr>
+      `;
+      document.getElementById('upcomingCount').textContent = '0';
+      document.getElementById('pastCount').textContent = '0';
+      return;
+    }
+
+    let upcomingCount = 0, pastCount = 0;
+    let html = '';
+
+    data.appointments.forEach(row => {
+      const canManage = row.status === 'Waiting';
+      if (row.status === 'Waiting') upcomingCount++;
+      else pastCount++;
+
+      const dateStr = new Date(row.appointmentDate).toLocaleDateString();
+      const timeStr = new Date(row.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+      html += `
+        <tr>
+          <td><strong>#${row._id.slice(-6)}</strong></td>
+          <td>${dateStr}</td>
+          <td>${timeStr}</td>
+          <td><i class="fas fa-user-doctor" style="margin-right: 4px;"></i>${row.doctor_name}</td>
+          <td>${row.queue_number || '-'}</td>
+          <td><span class="table-status status-${row.status.toLowerCase().replace(' ', '-')}">${row.status}</span></td>
+          <td>
+            <div class="table-row-action">
+              ${canManage ? `
+                <button class="btn btn-secondary btn-sm" onclick="openRescheduleModal(${row.id}, ${row.doctor_id || 0}, '${row.appointment_date}', '${String(row.appointment_time).slice(0, 5)}')">
+                  <i class="fas fa-edit"></i> Reschedule
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="cancelAppointment(${row.id})">
+                  <i class="fas fa-trash"></i> Cancel
+                </button>
+              ` : '-'}
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    document.getElementById('appointmentsList').innerHTML = html;
+    document.getElementById('upcomingCount').textContent = upcomingCount;
+    document.getElementById('pastCount').textContent = pastCount;
+
+    // Load medical records
+    if (!data.medicalRecords || data.medicalRecords.length === 0) {
+      document.getElementById('recordsList').innerHTML = `
+        <tr><td colspan="5" style="text-align: center; padding: var(--spacing-6);">
+          <i class="fas fa-inbox"></i> No medical records yet.
+        </td></tr>
+      `;
+      document.getElementById('recordsCount').textContent = '0';
+      return;
+    }
+
+    let recordsHtml = '';
+    data.medicalRecords.forEach(record => {
+      recordsHtml += `
+        <tr>
+          <td>${record.visit_date || '-'}</td>
+          <td><i class="fas fa-user-doctor" style="margin-right: 4px;"></i>${record.doctor_name || 'N/A'}</td>
+          <td>${record.diagnosis || '-'}</td>
+          <td>${record.prescriptions || '-'}</td>
+          <td><small>${(record.notes || '-').substring(0, 50)}${(record.notes || '').length > 50 ? '...' : ''}</small></td>
+        </tr>
+      `;
+    });
+
+    document.getElementById('recordsList').innerHTML = recordsHtml;
+    document.getElementById('recordsCount').textContent = data.medicalRecords.length;
+    document.getElementById('doctorsCount').textContent = doctorOptions.length;
+
+  } catch (err) {
+    console.error('Error loading appointments:', err);
+    document.getElementById('appointmentsList').innerHTML = `
+      <tr><td colspan="7" style="text-align: center; color: var(--danger); padding: var(--spacing-4);">
+        <i class="fas fa-exclamation-circle"></i> Connection error
+      </td></tr>
+    `;
+  }
+}
+
+function openRescheduleModal(appointmentId, doctorId, date, time) {
+  document.getElementById('rescheduleAppointmentId').value = appointmentId;
+  document.getElementById('rescheduleDoctor').value = doctorId;
+  document.getElementById('rescheduleDate').value = date;
+  document.getElementById('rescheduleTime').value = time;
+  document.getElementById('rescheduleModal').classList.add('active');
+}
+
+function closeRescheduleModal() {
+  document.getElementById('rescheduleModal').classList.remove('active');
+  document.getElementById('rescheduleError').innerHTML = '';
+}
+
+async function saveReschedule() {
+  const appointmentId = document.getElementById('rescheduleAppointmentId').value;
+  const doctorId = document.getElementById('rescheduleDoctor').value;
+  const date = document.getElementById('rescheduleDate').value;
+  const time = document.getElementById('rescheduleTime').value;
+  const errorEl = document.getElementById('rescheduleError');
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/patients/appointment/${appointmentId}/reschedule`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ doctorId, appointmentDate: date, appointmentTime: time })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorEl.innerHTML = `<div class="alert alert-danger" style="margin-top: var(--spacing-4);"><div class="alert-content"><p style="margin: 0;">${data.message || 'Failed to reschedule'}</p></div></div>`;
+      return;
+    }
+
+    closeRescheduleModal();
+    loadAppointments();
+    showNotification('Appointment rescheduled successfully!', 'success');
+  } catch (err) {
+    errorEl.innerHTML = `<div class="alert alert-danger" style="margin-top: var(--spacing-4);"><div class="alert-content"><p style="margin: 0;">Connection error</p></div></div>`;
+  }
+}
+
+async function cancelAppointment(appointmentId) {
+  if (!confirm('Are you sure you want to cancel this appointment?')) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/patients/appointment/${appointmentId}/cancel`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      showNotification('Failed to cancel appointment', 'danger');
+      return;
+    }
+
+    loadAppointments();
+    showNotification('Appointment cancelled successfully', 'success');
+  } catch (err) {
+    showNotification('Connection error', 'danger');
+  }
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = 'patient-login.html';
+}
+
+function showNotification(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease-out;">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 3000);
+}
+
+// Load data on page load
+loadDoctors();
+loadAppointments();
+</script>
+</body>
+</html>

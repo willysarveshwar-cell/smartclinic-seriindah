@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Descriptions | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* ── Page Banner ──────────────────────────────────── */
+    .pd-banner {
+      background: linear-gradient(135deg, #0d9488 0%, #0f766e 65%, #115e59 100%);
+      color: #fff;
+      padding: 24px 28px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .pd-banner-icon {
+      width: 50px; height: 50px; flex-shrink: 0;
+      background: rgba(255,255,255,.18);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+    }
+    .pd-banner h1 { margin: 0; font-size: 1.35rem; font-weight: 700; }
+    .pd-banner p  { margin: 3px 0 0; font-size: .86rem; opacity: .82; }
+
+    /* ── Filter card ──────────────────────────────────── */
+    .pd-filter {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.05);
+    }
+    .pd-filter-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .pd-filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .pd-filter-group label {
+      font-size: .74rem; font-weight: 600; color: #475569;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .pd-filter-group input,
+    .pd-filter-group select {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: .87rem; font-family: inherit; color: #0f172a;
+      background: #f8fafc; min-width: 160px;
+    }
+    .pd-filter-group input:focus,
+    .pd-filter-group select:focus { border-color: #0d9488; outline: none; }
+    .pd-filter-btns { display: flex; gap: 8px; align-items: flex-end; }
+    .btn-apply {
+      padding: 8px 18px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 8px;
+      font-size: .85rem; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .btn-clear {
+      padding: 8px 16px;
+      background: #f8fafc; color: #64748b;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: .85rem; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .btn-clear:hover { background: #f1f5f9; }
+
+    /* ── Stats row ─────────────────────────────────────── */
+    .pd-stats {
+      display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .pd-stat-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 30px;
+      font-size: .82rem; font-weight: 600;
+      border: 1px solid;
+    }
+    .pd-stat-chip.all    { background:#f0fdfa; color:#0f766e; border-color:#99f6e4; }
+    .pd-stat-chip.withd  { background:#dbeafe; color:#1e40af; border-color:#93c5fd; }
+    .pd-stat-chip.nodesc { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+
+    /* ── Table card ─────────────────────────────────────── */
+    .pd-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      overflow: hidden;
+    }
+    .pd-card-head {
+      padding: 16px 22px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #f8fafc;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pd-card-head-icon {
+      width: 32px; height: 32px; flex-shrink: 0;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .8rem;
+    }
+    .pd-card-head h2 { margin: 0; font-size: .95rem; font-weight: 700; color: #0f172a; }
+
+    .pd-table-wrap { overflow-x: auto; }
+    .pd-table { width: 100%; border-collapse: collapse; font-size: .87rem; min-width: 780px; }
+    .pd-table thead { background: linear-gradient(135deg, #0d9488, #0f766e); }
+    .pd-table thead th {
+      padding: 13px 16px; color: rgba(255,255,255,.9);
+      font-size: .72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; text-align: left; white-space: nowrap;
+    }
+    .pd-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background .1s; }
+    .pd-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .pd-table tbody tr:hover { background: #f0fdfa !important; }
+    .pd-table td { padding: 12px 16px; color: #1e293b; vertical-align: middle; }
+
+    .desc-text {
+      max-width: 220px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; color: #475569; font-size: .83rem;
+    }
+    .no-desc { color: #94a3b8; font-style: italic; font-size: .83rem; }
+
+    /* Status badges */
+    .s-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: .74rem; font-weight: 600; white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .s-waiting  { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+    .s-progress { background:#dbeafe; color:#1e40af; border-color:#93c5fd; }
+    .s-done     { background:#dcfce7; color:#166534; border-color:#86efac; }
+    .s-cancel   { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+
+    /* Action buttons */
+    .row-acts { display: flex; gap: 6px; }
+    .btn-view {
+      padding: 4px 11px; font-size: .77rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; border-radius: 6px;
+      background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4;
+      transition: background .12s;
+    }
+    .btn-view:hover { background: #0d9488; color: #fff; }
+    .btn-dl {
+      padding: 4px 11px; font-size: .77rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; border-radius: 6px;
+      background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+      transition: background .12s, color .12s;
+    }
+    .btn-dl:hover { background: #1d4ed8; color: #fff; }
+
+    .pd-empty { text-align: center; padding: 56px 24px; color: #94a3b8; }
+    .pd-empty i { font-size: 2.4rem; display: block; margin-bottom: 12px; }
+
+    /* ── View Description Modal ─────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(4px);
+      z-index: 9000; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 28px; width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
+      animation: modal-in .2s ease;
+    }
+    @keyframes modal-in {
+      from { transform: scale(.95) translateY(-10px); opacity: 0; }
+      to   { transform: scale(1)  translateY(0);      opacity: 1; }
+    }
+    .modal-title {
+      display: flex; align-items: center; gap: 10px;
+      margin: 0 0 20px; font-size: 1.05rem; font-weight: 700; color: #0f172a;
+    }
+    .modal-title-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: .88rem;
+    }
+    .info-row {
+      display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .info-item { flex: 1; min-width: 140px; }
+    .info-item .lbl { font-size: .72rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: .04em; }
+    .info-item .val { font-size: .9rem; font-weight: 600; color: #0f172a; margin-top: 2px; }
+    .desc-section-head {
+      font-size: .78rem; font-weight: 600; color: #475569;
+      text-transform: uppercase; letter-spacing: .05em;
+      margin: 0 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .desc-section-head::after { content:""; flex:1; height:1px; background:#f1f5f9; }
+    .desc-box {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 14px 16px; font-size: .9rem; color: #334155;
+      line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+      margin-bottom: 18px; min-height: 80px;
+    }
+    .modal-footer { display: flex; gap: 10px; }
+    .m-dl-btn {
+      flex: 1; padding: 10px 18px;
+      background: linear-gradient(135deg, #0d9488, #0f766e);
+      color: #fff; border: none; border-radius: 8px;
+      font-size: .9rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .m-close-btn {
+      padding: 10px 18px; border: 1px solid #e2e8f0; background: #f8fafc;
+      color: #64748b; border-radius: 8px; font-size: .9rem;
+      font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+
+    /* ── Print/PDF layout ───────────────────────────────── */
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: fixed; inset: 0; padding: 40px; font-family: sans-serif; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <h2><i class="fas fa-file-medical-alt" style="margin-right:8px;opacity:.85;"></i>Patient Descriptions</h2>
+  <div>
+    <button onclick="window.location.href='admin-dashboard.html'">Back</button>
+  </div>
+</div>
+
+<div class="dashboard-container">
+
+  <!-- Banner -->
+  <div class="pd-banner">
+    <div class="pd-banner-icon"><i class="fas fa-notes-medical"></i></div>
+    <div>
+      <h1>Patient Consultation Descriptions</h1>
+      <p>Doctor notes and consultation descriptions for each appointment — view and download as PDF</p>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="pd-filter">
+    <div class="pd-filter-row">
+      <div class="pd-filter-group">
+        <label>Patient Name</label>
+        <input id="fName" placeholder="Search patient…" oninput="applyFilter()">
+      </div>
+      <div class="pd-filter-group">
+        <label>Date</label>
+        <input id="fDate" type="date" onchange="applyFilter()">
+      </div>
+      <div class="pd-filter-group">
+        <label>Doctor</label>
+        <select id="fDoctor" onchange="applyFilter()">
+          <option value="">All Doctors</option>
+        </select>
+      </div>
+      <div class="pd-filter-group">
+        <label>Show</label>
+        <select id="fDesc" onchange="applyFilter()">
+          <option value="">All Appointments</option>
+          <option value="with">With Description Only</option>
+          <option value="without">Without Description</option>
+        </select>
+      </div>
+      <div class="pd-filter-btns">
+        <button class="btn-apply" onclick="applyFilter()"><i class="fas fa-search"></i> Filter</button>
+        <button class="btn-clear" onclick="clearFilter()"><i class="fas fa-times"></i> Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="pd-stats" id="statsRow"></div>
+
+  <!-- Table -->
+  <div class="pd-card">
+    <div class="pd-card-head">
+      <div class="pd-card-head-icon"><i class="fas fa-table"></i></div>
+      <h2>Appointments &amp; Descriptions</h2>
+    </div>
+    <div class="pd-table-wrap">
+      <div id="pdTable">
+        <div class="pd-empty">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- View Description Modal -->
+<div id="viewModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 class="modal-title">
+      <span class="modal-title-icon"><i class="fas fa-notes-medical"></i></span>
+      Patient Description
+    </h3>
+    <div class="info-row" id="modalInfo"></div>
+    <p class="desc-section-head"><i class="fas fa-comment-medical"></i> Consultation Notes</p>
+    <div class="desc-box" id="modalDesc">No description available.</div>
+    <p class="desc-section-head"><i class="fas fa-notes-medical"></i> Medical Record</p>
+    <div class="desc-box" id="modalRecord">No medical record available.</div>
+    <div class="modal-footer">
+      <button class="m-dl-btn" id="modalDlBtn"><i class="fas fa-file-pdf"></i> Download PDF</button>
+      <button class="m-close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden print area -->
+<div id="printArea" style="display:none;"></div>
+
+<script>
+let allRows = [];
+let doctors = [];
+let currentApt = null;
+
+function getAdminToken() { return localStorage.getItem("adminToken") || ""; }
+
+function authH(ct) {
+  const h = {};
+  const t = getAdminToken();
+  if (t) h.Authorization = "Bearer " + t;
+  if (ct) h["Content-Type"] = ct;
+  return h;
+}
+
+function esc(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function statusPill(s) {
+  const map = {
+    "Waiting":     "s-waiting",
+    "In Progress": "s-progress",
+    "Completed":   "s-done",
+    "Cancelled":   "s-cancel"
+  };
+  return `<span class="s-pill ${map[s]||""}">${esc(s)}</span>`;
+}
+
+function shortDesc(d) {
+  if (!d) return '<span class="no-desc"><i class="fas fa-minus"></i> No description</span>';
+  const short = d.length > 60 ? d.slice(0,60) + "…" : d;
+  return `<span class="desc-text" title="${esc(d)}">${esc(short)}</span>`;
+}
+
+async function loadDoctors() {
+  try {
+    const res = await fetch("http://localhost:5000/api/doctors", { headers: authH() });
+    doctors = await res.json();
+    const sel = document.getElementById("fDoctor");
+    doctors.forEach(d => {
+      const opt = document.createElement("option");
+      opt.value = d.doctorId;
+      opt.textContent = d.name;
+      sel.appendChild(opt);
+    });
+  } catch (e) { console.warn("Doctor list load failed", e); }
+}
+
+async function loadAppointments() {
+  if (!getAdminToken()) { window.location.href = "admin.html"; return; }
+  try {
+    const res = await fetch("http://localhost:5000/api/appointments", { headers: authH() });
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) { window.location.href = "admin.html"; return; }
+      throw new Error("Failed to load appointments");
+    }
+    allRows = await res.json();
+    applyFilter();
+  } catch (e) {
+    document.getElementById("pdTable").innerHTML =
+      '<div class="pd-empty"><i class="fas fa-exclamation-triangle"></i><p>Failed to load. Is the backend running?</p></div>';
+  }
+}
+
+function applyFilter() {
+  const fName   = (document.getElementById("fName").value || "").trim().toLowerCase();
+  const fDate   = (document.getElementById("fDate").value || "").trim();
+  const fDoctor = (document.getElementById("fDoctor").value || "").trim();
+  const fDesc   = (document.getElementById("fDesc").value || "").trim();
+
+  let rows = allRows.filter(r => {
+    if (fName   && !(r.patient_name || "").toLowerCase().includes(fName)) return false;
+    if (fDate   && r.appointment_date !== fDate) return false;
+    if (fDoctor && String(r.doctor_id) !== fDoctor) return false;
+    if (fDesc === "with"    &&  !r.description) return false;
+    if (fDesc === "without" &&   r.description) return false;
+    return true;
+  });
+
+  renderStats(rows);
+  renderTable(rows);
+}
+
+function clearFilter() {
+  ["fName","fDate"].forEach(id => document.getElementById(id).value = "");
+  ["fDoctor","fDesc"].forEach(id => document.getElementById(id).selectedIndex = 0);
+  applyFilter();
+}
+
+function renderStats(rows) {
+  const withDesc    = rows.filter(r => r.description).length;
+  const withoutDesc = rows.length - withDesc;
+  document.getElementById("statsRow").innerHTML = `
+    <span class="pd-stat-chip all"><i class="fas fa-calendar-check"></i> ${rows.length} appointments</span>
+    <span class="pd-stat-chip withd"><i class="fas fa-file-medical-alt"></i> ${withDesc} with description</span>
+    <span class="pd-stat-chip nodesc"><i class="fas fa-minus-circle"></i> ${withoutDesc} without description</span>`;
+}
+
+function renderTable(rows) {
+  const el = document.getElementById("pdTable");
+  if (!rows.length) {
+    el.innerHTML = '<div class="pd-empty"><i class="fas fa-search"></i><p>No appointments match your filters.</p></div>';
+    return;
+  }
+
+  let html = `
+    <table class="pd-table">
+      <thead>
+        <tr>
+          <th>Q#</th>
+          <th>Patient</th>
+          <th>IC Number</th>
+          <th>Doctor</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  rows.forEach(r => {
+    html += `<tr>
+      <td style="text-align:center;font-weight:700;color:#0d9488;">#${r.queue_number || "—"}</td>
+      <td><strong>${esc(r.patient_name)}</strong></td>
+      <td style="color:#64748b;font-size:.82rem;">${esc(r.ic_number)}</td>
+      <td style="color:#475569;">Dr. ${esc(r.doctor_name || "—")}</td>
+      <td>${esc(r.appointment_date)}</td>
+      <td>${esc((r.appointment_time||"").slice(0,5))}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>${shortDesc(r.description)}</td>
+      <td>
+        <div class="row-acts">
+          <button class="btn-view" onclick="viewApt(${r.id})">
+            <i class="fas fa-eye"></i> View
+          </button>
+          <button class="btn-dl" onclick="downloadPDF(${r.id})">
+            <i class="fas fa-file-pdf"></i> PDF
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+
+function getApt(id) {
+  return allRows.find(r => r.id === id) || null;
+}
+
+function viewApt(id) {
+  const apt = getApt(id);
+  if (!apt) return;
+  currentApt = apt;
+
+  document.getElementById("modalInfo").innerHTML = `
+    <div class="info-item">
+      <div class="lbl">Patient</div>
+      <div class="val">${esc(apt.patient_name)}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">IC Number</div>
+      <div class="val">${esc(apt.ic_number)}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Doctor</div>
+      <div class="val">Dr. ${esc(apt.doctor_name || "—")}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Date &amp; Time</div>
+      <div class="val">${esc(apt.appointment_date)} ${esc((apt.appointment_time||"").slice(0,5))}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Status</div>
+      <div class="val">${apt.status}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Queue No.</div>
+      <div class="val">#${apt.queue_number || "—"}</div>
+    </div>`;
+
+  document.getElementById("modalDesc").textContent = apt.description || "No description has been added for this appointment.";
+  const recordHtml = [];
+  if (apt.diagnosis) recordHtml.push(`<strong>Diagnosis:</strong> ${esc(apt.diagnosis)}`);
+  if (apt.prescriptions) recordHtml.push(`<strong>Prescriptions:</strong> ${esc(apt.prescriptions)}`);
+  if (apt.medical_record_notes) recordHtml.push(`<strong>Notes:</strong> ${esc(apt.medical_record_notes)}`);
+  if (apt.medical_record_date) recordHtml.push(`<strong>Record Date:</strong> ${esc(apt.medical_record_date)}`);
+  document.getElementById("modalRecord").innerHTML = recordHtml.length ? recordHtml.join("<br />") : "No medical record available.";
+  document.getElementById("modalDlBtn").onclick = () => downloadPDF(id);
+  document.getElementById("viewModal").classList.add("open");
+}
+
+function closeModal() {
+  document.getElementById("viewModal").classList.remove("open");
+  currentApt = null;
+}
+
+function downloadPDF(id) {
+  const apt = getApt(id) || currentApt;
+  if (!apt) { alert("Appointment data not found."); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+  const W = 210, PL = 20, PR = 20, TW = W - PL - PR;
+
+  // Header bar
+  doc.setFillColor(13, 148, 136);
+  doc.rect(0, 0, W, 32, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Smart Clinic", PL, 13);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text("Patient Consultation Description", PL, 22);
+
+  // Generated date
+  doc.setFontSize(8);
+  doc.text("Generated: " + new Date().toLocaleString(), W - PR, 27, { align: "right" });
+
+  // Title
+  doc.setTextColor(15, 23, 42);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Patient Description Report", PL, 46);
+
+  // Divider line
+  doc.setDrawColor(13, 148, 136);
+  doc.setLineWidth(0.8);
+  doc.line(PL, 49, W - PR, 49);
+
+  // Patient info table
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(71, 85, 105);
+
+  const fields = [
+    ["Patient Name",   apt.patient_name || "—"],
+    ["IC Number",      apt.ic_number || "—"],
+    ["Patient Email",  apt.patient_email || "—"],
+    ["Phone",          apt.patient_phone || "—"],
+    ["Doctor",         "Dr. " + (apt.doctor_name || "—")],
+    ["Date",           apt.appointment_date || "—"],
+    ["Time",           (apt.appointment_time || "—").slice(0, 5)],
+    ["Queue No.",      "#" + (apt.queue_number || "—")],
+    ["Status",         apt.status || "—"]
+  ];
+
+  let y = 58;
+  fields.forEach(([lbl, val]) => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(71, 85, 105);
+    doc.text(lbl + ":", PL, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(15, 23, 42);
+    doc.text(String(val), PL + 40, y);
+    y += 8;
+  });
+
+  // Description section
+  y += 4;
+  doc.setFillColor(240, 253, 250);
+  doc.setDrawColor(153, 246, 228);
+  doc.setLineWidth(0.4);
+
+  const desc = apt.description || "No consultation description has been recorded for this appointment.";
+  const descLines = doc.splitTextToSize(desc, TW - 12);
+  const descH  = descLines.length * 6 + 16;
+  doc.roundedRect(PL, y, TW, descH, 3, 3, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 118, 110);
+  doc.setFontSize(9);
+  doc.text("Consultation Notes", PL + 6, y + 8);
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(51, 65, 85);
+  doc.setFontSize(10);
+  doc.text(descLines, PL + 6, y + 15);
+
+  y += descH + 8;
+  const recordLines = [];
+  if (apt.diagnosis) recordLines.push("Diagnosis: " + apt.diagnosis);
+  if (apt.prescriptions) recordLines.push("Prescriptions: " + apt.prescriptions);
+  if (apt.medical_record_notes) recordLines.push("Medical Record Notes: " + apt.medical_record_notes);
+  if (apt.medical_record_date) recordLines.push("Record Date: " + apt.medical_record_date);
+  const recordText = recordLines.length ? recordLines.join("\n\n") : "No medical record available.";
+  const recLines = doc.splitTextToSize(recordText, TW - 12);
+  const recH = recLines.length * 6 + 16;
+  doc.roundedRect(PL, y, TW, recH, 3, 3, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 118, 110);
+  doc.setFontSize(9);
+  doc.text("Medical Record", PL + 6, y + 8);
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(51, 65, 85);
+  doc.setFontSize(10);
+  doc.text(recLines, PL + 6, y + 15);
+
+  // Footer
+  const pageH = 297;
+  doc.setFillColor(248, 250, 252);
+  doc.rect(0, pageH - 16, W, 16, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.line(0, pageH - 16, W, pageH - 16);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184);
+  doc.text("Smart Clinic System  |  Confidential – For Medical Use Only", PL, pageH - 6);
+  doc.text("Page 1", W - PR, pageH - 6, { align: "right" });
+
+  const safeName = (apt.patient_name || "patient").replace(/[^a-z0-9]/gi, "_");
+  doc.save(`description_${safeName}_${apt.appointment_date || "nodate"}.pdf`);
+}
+
+document.getElementById("viewModal").addEventListener("click", function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!getAdminToken()) { window.location.href = "admin.html"; return; }
+  await Promise.all([loadDoctors(), loadAppointments()]);
+});
+</script>
+
+<script src="script.js"></script>
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Book Appointment | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<header class="navbar">
+  <h2>Smart Clinic</h2>
+  <nav>
+    <button onclick="goHome()">Home</button>
+    <button onclick="goBack()">Back</button>
+    <button onclick="goQueue()">Queue</button>
+    <button onclick="window.location.href='check-in.html'">QR Check-In</button>
+  </nav>
+</header>
+
+<section class="form-container wide">
+  <h2>Book Appointment</h2>
+
+  <input id="name" placeholder="Patient Name" required>
+  <input id="ic" placeholder="IC Number" required>
+  <input id="email" type="email" placeholder="Email (for reminder)">
+  <input id="phone" placeholder="Phone (for SMS reminder)">
+  <select id="doctor" required>
+    <option value="">Select Doctor</option>
+  </select>
+  <input id="date" type="date" required>
+  <select id="time" required>
+    <option value="">Select Time</option>
+  </select>
+  <p id="slotHint" class="success-text" style="margin: 0; display: none;"></p>
+
+  <button class="primary" onclick="bookAppointment()">Submit</button>
+</section>
+
+<div id="popup" class="popup" style="display: none;">
+  <div class="popup-content">
+    <span class="close" onclick="closePopup()" aria-label="Close">&times;</span>
+    <p id="popupMessage"></p>
+    <div id="qrSection" style="display:none; margin-top: 14px;">
+      <img id="qrImage" alt="Appointment QR code for check-in" />
+      <p class="popup-token" id="qrTokenText"></p>
+      <button class="primary" style="margin-top:12px;width:100%;" onclick="window.location.href='check-in.html'">Open Check-In Page</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script src="chatbot.js"></script>
+<footer><p>© 2026 Smart Clinic System</p></footer>
+</body>
+</html>

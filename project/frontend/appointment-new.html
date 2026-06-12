@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Book Appointment | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Smart Clinic</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goQueue()"><i class="fas fa-list-ol"></i> Queue</button>
+    <button class="btn btn-text" onclick="goCheckIn()"><i class="fas fa-qrcode"></i> Check In</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Book an Appointment</h1>
+    <p class="page-description">Schedule your visit with our experienced healthcare professionals</p>
+  </div>
+
+  <div style="max-width: 600px; margin: 0 auto;">
+    <div class="card">
+      <form onsubmit="handleBookAppointment(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="name"><i class="fas fa-user"></i> Full Name</label>
+            <input id="name" type="text" placeholder="Enter your full name" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="ic"><i class="fas fa-id-card"></i> IC Number</label>
+            <input id="ic" type="text" placeholder="Enter your IC number" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="email"><i class="fas fa-envelope"></i> Email</label>
+            <input id="email" type="email" placeholder="Enter your email (optional)">
+            <small class="form-hint">For appointment reminders</small>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="phone"><i class="fas fa-phone"></i> Phone</label>
+            <input id="phone" type="tel" placeholder="Enter your phone (optional)">
+            <small class="form-hint">For SMS reminders</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="doctor"><i class="fas fa-user-doctor"></i> Select Doctor</label>
+          <select id="doctor" required onchange="loadAvailableTimes()">
+            <option value="">-- Choose a doctor --</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="date"><i class="fas fa-calendar"></i> Appointment Date</label>
+            <input id="date" type="date" required onchange="loadAvailableTimes()">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="time"><i class="fas fa-clock"></i> Preferred Time</label>
+            <select id="time" required>
+              <option value="">-- Select time --</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="slotMessage" class="alert" style="display: none; margin-bottom: var(--spacing-4);"></div>
+
+        <div class="btn-group" style="justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="goBack()"><i class="fas fa-times"></i> Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Book Appointment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-check-circle" style="color: var(--success);"></i> Appointment Confirmed</h3>
+      <button class="modal-close" onclick="closeSuccessModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="successMessage"></div>
+      <div id="qrCodeContainer" style="text-align: center; margin-top: var(--spacing-4);">
+        <p style="color: var(--text-secondary); margin-bottom: var(--spacing-3);">Your QR Code for Check-In</p>
+        <div id="qrCode" style="display: inline-block; padding: var(--spacing-4); background: var(--surface-secondary); border-radius: var(--radius-lg);"></div>
+        <p id="tokenText" class="muted-text" style="margin-top: var(--spacing-2);"></p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSuccessModal()">Close</button>
+      <button class="btn btn-primary" onclick="window.location.href='check-in.html'"><i class="fas fa-qrcode"></i> Go to Check-In</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Quality Healthcare Service.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+// Load doctors on page load
+document.addEventListener('DOMContentLoaded', loadDoctors);
+
+async function loadDoctors() {
+  try {
+    const res = await fetch('http://localhost:5000/api/doctors');
+    const doctors = await res.json();
+    const select = document.getElementById('doctor');
+    
+    select.innerHTML = '<option value="">-- Choose a doctor --</option>';
+    doctors.forEach(doctor => {
+      const option = document.createElement('option');
+      option.value = doctor.doctorId || doctor.id;
+      option.textContent = `Dr. ${doctor.name} (${doctor.specialization})`;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    showMessage('Failed to load doctors', 'danger');
+  }
+}
+
+async function loadAvailableTimes() {
+  const doctor = document.getElementById('doctor').value;
+  const date = document.getElementById('date').value;
+  const timeSelect = document.getElementById('time');
+  const messageEl = document.getElementById('slotMessage');
+
+  if (!doctor || !date) {
+    timeSelect.innerHTML = '<option value="">-- Select time --</option>';
+    return;
+  }
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/appointments/available-slots?doctor_id=${doctor}&date=${date}`);
+    const data = await res.json();
+
+    if (!data.slots || data.slots.length === 0) {
+      timeSelect.innerHTML = '<option value="">No available slots</option>';
+      showMessage(`No available slots on ${date}. Please choose another date.`, 'warning');
+      messageEl.style.display = 'block';
+      return;
+    }
+
+    timeSelect.innerHTML = '<option value="">-- Select time --</option>';
+    data.slots.forEach(slot => {
+      const option = document.createElement('option');
+      option.value = slot.time;
+      option.textContent = slot.available ? slot.time : `${slot.time} (Booked)`;
+      option.disabled = !slot.available;
+      timeSelect.appendChild(option);
+    });
+
+    messageEl.style.display = 'none';
+  } catch (err) {
+    showMessage('Failed to load available times', 'danger');
+  }
+}
+
+async function handleBookAppointment(event) {
+  event.preventDefault();
+  
+  const name = document.getElementById('name').value.trim();
+  const ic = document.getElementById('ic').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const doctorId = document.getElementById('doctor').value;
+  const date = document.getElementById('date').value;
+  const time = document.getElementById('time').value;
+
+  if (!name || !ic || !doctorId || !date || !time) {
+    showMessage('Please fill in all required fields', 'danger');
+    return;
+  }
+
+  if (ic.length < 6) {
+    showMessage('IC Number must be at least 6 characters', 'danger');
+    return;
+  }
+
+  try {
+    const res = await fetch('http://localhost:5000/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_name: name,
+        ic_number: ic,
+        patient_email: email || undefined,
+        patient_phone: phone || undefined,
+        doctor_id: doctorId,
+        appointment_date: date,
+        appointment_time: time
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMessage(data.message || 'Failed to book appointment', 'danger');
+      return;
+    }
+
+    // Show success modal with QR code
+    showSuccessModal(data, name);
+  } catch (err) {
+    showMessage('Connection error. Please try again.', 'danger');
+  }
+}
+
+function showSuccessModal(data, patientName) {
+  const successMsg = document.getElementById('successMessage');
+  successMsg.innerHTML = `
+    <div class="alert alert-success">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-check-circle"></i> Your appointment has been confirmed!</p>
+      </div>
+    </div>
+    <div style="margin-top: var(--spacing-6); text-align: left;">
+      <p><strong>Appointment Details:</strong></p>
+      <ul style="list-style: none; padding: 0;">
+        <li style="padding: 6px 0;"><i class="fas fa-calendar"></i> <strong>Date:</strong> ${data.appointment?.appointmentDate || 'N/A'}</li>
+        <li style="padding: 6px 0;"><i class="fas fa-clock"></i> <strong>Time:</strong> ${data.appointment?.appointmentTime || 'N/A'}</li>
+        <li style="padding: 6px 0;"><i class="fas fa-user-doctor"></i> <strong>Doctor:</strong> ${data.appointment?.doctorName || 'N/A'}</li>
+        <li style="padding: 6px 0;"><i class="fas fa-list-ol"></i> <strong>Queue Number:</strong> ${data.appointment?.queueNumber || 'N/A'}</li>
+      </ul>
+    </div>
+  `;
+
+  if (data.qrCode || data.checkInToken) {
+    const qrPayload = data.qrCode || data.checkInToken;
+    document.getElementById('qrCode').innerHTML = '';
+    new QRCode(document.getElementById('qrCode'), {
+      text: qrPayload,
+      width: 200,
+      height: 200,
+      colorDark: '#0f766e',
+      colorLight: '#ffffff'
+    });
+    document.getElementById('tokenText').textContent = `Token: ${qrPayload}`;
+  }
+
+  document.getElementById('successModal').classList.add('active');
+}
+
+function closeSuccessModal() {
+  document.getElementById('successModal').classList.remove('active');
+  window.location.href = 'index.html';
+}
+
+function showMessage(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 4000);
+}
+</script>
+</body>
+</html>

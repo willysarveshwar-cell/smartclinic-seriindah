@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Live Queue | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    .queue-display {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: var(--spacing-8);
+      margin-bottom: var(--spacing-8);
+      
+      @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-6);
+      }
+    }
+    
+    .queue-current {
+      background: var(--gradient-primary);
+      color: var(--text-inverse);
+      padding: var(--spacing-8);
+      border-radius: var(--radius-xl);
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .queue-now {
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.9;
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .queue-number-large {
+      font-size: 4rem;
+      font-weight: var(--font-extrabold);
+      line-height: 1;
+      margin-bottom: var(--spacing-4);
+    }
+    
+    .queue-patient-name {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      margin-bottom: var(--spacing-2);
+    }
+    
+    .queue-doctor {
+      opacity: 0.85;
+      font-size: var(--text-sm);
+    }
+    
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-3);
+    }
+    
+    .queue-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-4);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+      transition: all var(--transition-base);
+      border-left: 4px solid var(--border);
+      
+      &:hover {
+        border-left-color: var(--primary);
+        box-shadow: var(--shadow-md);
+      }
+      
+      &.queue-item-active {
+        background: var(--primary-50);
+        border-color: var(--primary);
+        border-left-color: var(--primary);
+      }
+    }
+    
+    .queue-item-number {
+      font-size: 1.875rem;
+      font-weight: var(--font-extrabold);
+      color: var(--primary);
+      min-width: 80px;
+      text-align: center;
+    }
+    
+    .queue-item-details {
+      flex: 1;
+    }
+    
+    .queue-item-name {
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-1);
+    }
+    
+    .queue-item-info {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    
+    .queue-item-status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Live Queue Status</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goAppointment()"><i class="fas fa-calendar-plus"></i> Book Appointment</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Real-Time Queue Monitor</h1>
+    <p class="page-description">Check your queue position and estimated wait time</p>
+  </div>
+
+  <!-- QUEUE DISPLAY -->
+  <div class="queue-display">
+    <!-- CURRENTLY BEING SERVED -->
+    <div class="queue-current">
+      <div class="queue-now"><i class="fas fa-play"></i> Now Being Served</div>
+      <div class="queue-number-large" id="currentQueueNumber">--</div>
+      <div class="queue-patient-name" id="currentPatientName">--</div>
+      <div class="queue-doctor"><i class="fas fa-user-doctor"></i> <span id="currentDoctor">--</span></div>
+    </div>
+
+    <!-- QUEUE STATS -->
+    <div>
+      <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: var(--spacing-6);">
+        <div class="stat-card">
+          <div class="stat-label"><i class="fas fa-users"></i> Waiting</div>
+          <div class="stat-value" id="waitingCount">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i class="fas fa-clock"></i> Est. Wait Time</div>
+          <div class="stat-value" id="estimatedWait">--</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title" style="margin-bottom: var(--spacing-4);"><i class="fas fa-info-circle"></i> How to Use</h3>
+        <ul style="margin: 0; padding-left: var(--spacing-6);">
+          <li style="margin-bottom: var(--spacing-2);">Check your queue position in real time</li>
+          <li style="margin-bottom: var(--spacing-2);">Estimated wait time is automatically calculated</li>
+          <li style="margin-bottom: var(--spacing-2);">Refresh automatically every 10 seconds</li>
+          <li>Check-in with QR code when your number is called</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL QUEUE LIST -->
+  <section class="section">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-4); margin-bottom: var(--spacing-6);">
+      <h2 class="section-title">Queue List (Next 20)</h2>
+    </div>
+    
+    <div class="toolbar" style="margin-bottom: var(--spacing-4);">
+      <div class="toolbar-left">
+        <select id="filterDoctor" style="max-width: 250px;">
+          <option value="">All Doctors</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-secondary btn-sm" onclick="refreshQueue()"><i class="fas fa-sync"></i> Refresh Now</button>
+      </div>
+    </div>
+
+    <div class="queue-list" id="queueList">
+      <div style="text-align: center; padding: var(--spacing-8); color: var(--text-secondary);">
+        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: var(--spacing-4);"></i>
+        <p>Loading queue...</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Real-time Queue Management.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+async function loadQueue() {
+  try {
+    const doctorFilter = document.getElementById('filterDoctor').value;
+    const url = doctorFilter 
+      ? `http://localhost:5000/api/queue?doctorId=${doctorFilter}`
+      : 'http://localhost:5000/api/queue';
+    
+    const res = await fetch(url);
+    const queue = await res.json();
+
+    if (!queue || queue.length === 0) {
+      document.getElementById('queueList').innerHTML = `
+        <div style="text-align: center; padding: var(--spacing-8); color: var(--text-secondary);">
+          <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: var(--spacing-4);"></i>
+          <p>No patients in queue currently</p>
+        </div>
+      `;
+      document.getElementById('currentQueueNumber').textContent = '--';
+      document.getElementById('currentPatientName').textContent = '--';
+      document.getElementById('currentDoctor').textContent = '--';
+      document.getElementById('waitingCount').textContent = '0';
+      document.getElementById('estimatedWait').textContent = '--';
+      return;
+    }
+
+    // Update current
+    const current = queue[0];
+    document.getElementById('currentQueueNumber').textContent = current.queueNumber || '--';
+    document.getElementById('currentPatientName').textContent = current.patientName || '--';
+    document.getElementById('currentDoctor').textContent = current.doctorName || '--';
+    document.getElementById('waitingCount').textContent = (queue.length - 1);
+    document.getElementById('estimatedWait').textContent = ((queue.length - 1) * 15) + ' min';
+
+    // Update list
+    let html = '';
+    queue.forEach((item, index) => {
+      const isActive = index === 0;
+      html += `
+        <div class="queue-item ${isActive ? 'queue-item-active' : ''}">
+          <div class="queue-item-number">#${item.queueNumber}</div>
+          <div class="queue-item-details">
+            <div class="queue-item-name"><i class="fas fa-user"></i> ${item.patientName}</div>
+            <div class="queue-item-info">
+              <i class="fas fa-user-doctor"></i> Dr. ${item.doctorName || 'N/A'}
+              ${item.appointmentTime ? ` • <i class="fas fa-clock"></i> ${item.appointmentTime}` : ''}
+            </div>
+          </div>
+          <div class="queue-item-status">
+            <span class="table-status status-${item.status.toLowerCase()}">
+              <i class="fas fa-${isActive ? 'play-circle' : 'clock'}"></i> ${item.status}
+            </span>
+          </div>
+        </div>
+      `;
+    });
+    
+    document.getElementById('queueList').innerHTML = html;
+
+    // Load doctors for filter
+    if (document.getElementById('filterDoctor').innerHTML === '<option value="">All Doctors</option>') {
+      const doctorsRes = await fetch('http://localhost:5000/api/doctors');
+      const doctors = await doctorsRes.json();
+      let doctorOptions = '<option value="">All Doctors</option>';
+      doctors.forEach(doctor => {
+        doctorOptions += `<option value="${doctor.doctorId}">${doctor.name}</option>`;
+      });
+      document.getElementById('filterDoctor').innerHTML = doctorOptions;
+    }
+
+  } catch (err) {
+    console.error('Error loading queue:', err);
+    document.getElementById('queueList').innerHTML = `
+      <div style="text-align: center; padding: var(--spacing-8); color: var(--danger);">
+        <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: var(--spacing-4);"></i>
+        <p>Error loading queue. Please try again.</p>
+      </div>
+    `;
+  }
+}
+
+function refreshQueue() {
+  loadQueue();
+}
+
+// Load on page load and auto-refresh every 10 seconds
+loadQueue();
+setInterval(loadQueue, 10000);
+
+// Filter change
+document.getElementById('filterDoctor').addEventListener('change', loadQueue);
+</script>
+</body>
+</html>

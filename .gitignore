@@ -1,0 +1,17 @@
+# Large/unnecessary files
+*.zip
+.vscode/
+
+# Smart clinic project - exclusions
+project/backend/node_modules/
+project/backend/.env
+project/frontend/node_modules/
+project/frontend/dist/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

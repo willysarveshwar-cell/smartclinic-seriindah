@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Admin Login | Smart Clinic</title>
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Smart Clinic</h2>
+  <div>
+    <button onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</div>
+
+<div class="form-container">
+  <h2>Admin Login</h2>
+
+  <form id="adminLoginForm">
+    <input type="email" id="email" placeholder="Admin Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button class="primary" type="submit">Login</button>
+  </form>
+
+  <p id="message" class="error-text"></p>
+</div>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+
+<script>
+document.getElementById("adminLoginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const messageEl = document.getElementById("message");
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const password = document.getElementById("password").value.trim();
+  messageEl.innerText = "";
+
+  if (!email || !password) {
+    messageEl.innerText = "Email and password are required";
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:5000/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const isJson = (response.headers.get("content-type") || "").includes("application/json");
+    const data = isJson ? await response.json() : { message: await response.text() };
+
+    if (response.ok) {
+      localStorage.setItem("adminLoggedIn", "true");
+      localStorage.setItem("adminName", data?.user?.name || "Admin");
+      localStorage.setItem("adminToken", data.token || "");
+      localStorage.setItem("adminRefreshToken", data.refreshToken || "");
+      window.location.href = "admin-dashboard.html";
+    } else {
+      messageEl.innerText = data.message || "Invalid admin credentials";
+    }
+  } catch (err) {
+    messageEl.innerText = "Server not reachable. Please start backend on http://localhost:5000";
+  }
+});
+
+function goHome() {
+  window.location.href = "index.html";
+}
+
+function goBack() {
+  window.history.back();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <title>Doctor Login | Smart Clinic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="stylesheet" href="dist/app.css">
+</head>
+<body>
+
+<div class="navbar">
+  <h2>Smart Clinic – Doctor Portal</h2>
+  <div>
+    <button onclick="window.location.href='index.html'"><i class="fas fa-home"></i> Home</button>
+    <button onclick="window.history.back()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</div>
+
+<div class="form-container">
+  <h2>Doctor Login</h2>
+
+  <form id="doctorLoginForm">
+    <input type="email" id="email" placeholder="Doctor Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+      <input type="checkbox" id="rememberMe" style="margin-right: 8px;">
+      <label for="rememberMe">Remember me</label>
+    </div>
+    <button class="primary" type="submit">Login</button>
+  </form>
+
+  <p id="message" class="error-text"></p>
+</div>
+
+<footer><p>© 2026 Smart Clinic System</p></footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Load remembered email
+  const rememberedEmail = localStorage.getItem("rememberedEmail");
+  if (rememberedEmail) {
+    document.getElementById("email").value = rememberedEmail;
+    document.getElementById("rememberMe").checked = true;
+  }
+});
+
+document.getElementById("doctorLoginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const rememberMe = document.getElementById("rememberMe").checked;
+  const messageEl = document.getElementById("message");
+
+  messageEl.style.display = "none";
+
+  if (!email || !password) {
+    messageEl.innerText = "Please fill in all fields";
+    messageEl.style.display = "block";
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/api/admin/doctor/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      messageEl.innerText = data.message || "Invalid credentials";
+      messageEl.style.display = "block";
+      return;
+    }
+
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", email);
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
+
+    localStorage.setItem("doctor", JSON.stringify(data.doctor));
+    localStorage.setItem("doctorToken", data.token || "");
+    window.location.href = "doctor-dashboard.html";
+
+  } catch (err) {
+    messageEl.innerText = "Server not responding";
+    messageEl.style.display = "block";
+  }
+});
+</script>
+
+</body>
+</html>

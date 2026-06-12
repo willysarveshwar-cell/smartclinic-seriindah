@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f766e">
+  <title>Manage Doctor Leaves | Smart Clinic</title>
+  <link rel="stylesheet" href="modern-styles.css">
+  <style>
+    .leaves-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-8);
+    }
+
+    .leave-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .leave-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    .leave-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .leave-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-full);
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-inverse);
+      font-size: 1.25rem;
+      font-weight: var(--font-bold);
+      flex-shrink: 0;
+    }
+
+    .leave-info h3 {
+      margin: 0 0 var(--spacing-1) 0;
+      font-size: var(--text-base);
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+    }
+
+    .leave-info p {
+      margin: 0;
+      font-size: var(--text-xs);
+      color: var(--text-secondary);
+    }
+
+    .leave-details {
+      background: var(--surface-secondary);
+      padding: var(--spacing-4);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--spacing-4);
+    }
+
+    .leave-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-2);
+      font-size: var(--text-sm);
+    }
+
+    .leave-detail-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .leave-detail-label {
+      color: var(--text-secondary);
+      font-weight: var(--font-medium);
+    }
+
+    .leave-detail-value {
+      color: var(--text-primary);
+      font-weight: var(--font-semibold);
+    }
+
+    .leave-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-1);
+      padding: var(--spacing-1) var(--spacing-3);
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: var(--font-medium);
+      text-transform: uppercase;
+    }
+
+    .status-pending { background: var(--warning-bg); color: var(--warning); }
+    .status-approved { background: var(--success-bg); color: var(--success); }
+    .status-rejected { background: var(--danger-bg); color: var(--danger); }
+
+    .leave-actions {
+      display: flex;
+      gap: var(--spacing-2);
+      margin-top: var(--spacing-4);
+      padding-top: var(--spacing-4);
+      border-top: 1px solid var(--border);
+    }
+
+    .add-leave-form {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-8);
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-8);
+      border: 1px solid var(--border);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-6);
+    }
+
+    .filter-section {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-6);
+      box-shadow: var(--shadow);
+      margin-bottom: var(--spacing-6);
+      border: 1px solid var(--border);
+    }
+
+    .filter-input {
+      padding: var(--spacing-3) var(--spacing-4);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      background: var(--surface);
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: var(--spacing-4);
+      margin-bottom: var(--spacing-6);
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--surface-secondary);
+      padding: var(--spacing-4);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      color: var(--primary);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .stat-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: var(--spacing-12);
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: var(--spacing-4);
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+      .leaves-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .leave-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body class="layout-top-nav">
+
+<header class="navbar">
+  <div class="navbar-brand">Leave Management</div>
+  <nav class="navbar-nav">
+    <button class="btn btn-text" onclick="goHome()"><i class="fas fa-home"></i> Home</button>
+    <button class="btn btn-text" onclick="goDashboard()"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+    <button class="btn btn-text" onclick="goDoctors()"><i class="fas fa-user-md"></i> Doctors</button>
+  </nav>
+  <div class="navbar-actions">
+    <button class="btn btn-secondary btn-sm" onclick="goBack()"><i class="fas fa-arrow-left"></i> Back</button>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="page-header">
+    <h1 class="page-title">Doctor Leave Management</h1>
+    <p class="page-description">Manage and approve doctor leave requests</p>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-value" id="totalLeaves">0</div>
+      <p class="stat-label">Total Leaves</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="pendingLeaves">0</div>
+      <p class="stat-label">Pending</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="approvedLeaves">0</div>
+      <p class="stat-label">Approved</p>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="rejectedLeaves">0</div>
+      <p class="stat-label">Rejected</p>
+    </div>
+  </div>
+
+  <!-- ADD LEAVE FORM -->
+  <div class="add-leave-form">
+    <h2 style="margin-bottom: var(--spacing-6);"><i class="fas fa-plus"></i> Add Leave Request</h2>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" for="doctorId"><i class="fas fa-user-md"></i> Doctor</label>
+        <select id="doctorId" required>
+          <option value="">Select doctor</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="leaveType"><i class="fas fa-leaf"></i> Leave Type</label>
+        <select id="leaveType" required>
+          <option value="">Select type</option>
+          <option value="Sick Leave">Sick Leave</option>
+          <option value="Casual Leave">Casual Leave</option>
+          <option value="Annual Leave">Annual Leave</option>
+          <option value="Emergency Leave">Emergency Leave</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="startDate"><i class="fas fa-calendar-alt"></i> Start Date</label>
+        <input id="startDate" type="date" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="endDate"><i class="fas fa-calendar-alt"></i> End Date</label>
+        <input id="endDate" type="date" required>
+      </div>
+
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label class="form-label" for="reason"><i class="fas fa-comment"></i> Reason (Optional)</label>
+        <textarea id="reason" rows="3" placeholder="Reason for leave..."></textarea>
+      </div>
+    </div>
+
+    <div id="formError" style="color: var(--danger); margin-bottom: var(--spacing-4); display: none;"></div>
+
+    <button class="btn btn-primary btn-lg" onclick="submitLeave()">
+      <i class="fas fa-plus"></i> Submit Leave Request
+    </button>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-section">
+    <h3 style="margin-bottom: var(--spacing-4);"><i class="fas fa-filter"></i> Filter Leaves</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-4);">
+      <div class="form-group">
+        <label class="form-label">Doctor</label>
+        <input id="filterDoctor" type="text" placeholder="Search doctor name..." class="filter-input">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="filterStatus" class="filter-input" onchange="loadLeaves()">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Leave Type</label>
+        <select id="filterType" class="filter-input" onchange="loadLeaves()">
+          <option value="">All Types</option>
+          <option value="Sick Leave">Sick Leave</option>
+          <option value="Casual Leave">Casual Leave</option>
+          <option value="Annual Leave">Annual Leave</option>
+          <option value="Emergency Leave">Emergency Leave</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: var(--spacing-3); align-items: flex-end;">
+        <button class="btn btn-primary" onclick="loadLeaves()">
+          <i class="fas fa-search"></i> Search
+        </button>
+        <button class="btn btn-secondary" onclick="clearFilters()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEAVES GRID -->
+  <div id="leavesContainer" class="leaves-grid">
+    <div class="empty-state" style="grid-column: 1 / -1;">
+      <i class="fas fa-calendar-times"></i>
+      <h3>No leaves found</h3>
+      <p>Leave requests will appear here</p>
+    </div>
+  </div>
+</main>
+
+<!-- APPROVE MODAL -->
+<div class="modal-overlay" id="approveModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-check-circle"></i> Approve Leave</h3>
+      <button class="modal-close" onclick="closeApproveModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Approve leave for <strong id="approveDoctorName"></strong>?</p>
+      <div style="background: var(--surface-secondary); padding: var(--spacing-4); border-radius: var(--radius); margin: var(--spacing-4) 0;">
+        <p style="margin: 0 0 var(--spacing-2) 0;"><strong>From:</strong> <span id="approveFromDate"></span></p>
+        <p style="margin: 0;"><strong>To:</strong> <span id="approveToDate"></span></p>
+      </div>
+      <div id="approveError" style="color: var(--danger); margin-top: var(--spacing-4); display: none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeApproveModal()">Cancel</button>
+      <button class="btn btn-success" onclick="confirmApprove()">Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-times-circle"></i> Reject Leave</h3>
+      <button class="modal-close" onclick="closeRejectModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p>Reject leave request for <strong id="rejectDoctorName"></strong>?</p>
+      <div class="form-group">
+        <label class="form-label" for="rejectReason">Rejection Reason (Optional)</label>
+        <textarea id="rejectReason" rows="3" placeholder="Why are you rejecting this request?"></textarea>
+      </div>
+      <div id="rejectError" style="color: var(--danger); margin-top: var(--spacing-4); display: none;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRejectModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2026 Smart Clinic System. Efficient leave management system.</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+let approveLeaveId = null;
+let rejectLeaveId = null;
+let doctors = [];
+
+function token() {
+  return localStorage.getItem("adminToken") || "";
+}
+
+function authHeaders() {
+  return { "Content-Type": "application/json", "Authorization": `Bearer ${token()}` };
+}
+
+function requireAdminLogin() {
+  if (!token()) {
+    showMessage("Admin login required. Redirecting to login page.", "warning");
+    setTimeout(() => window.location.href = "admin-login.html", 2000);
+    return false;
+  }
+  return true;
+}
+
+async function loadDoctors() {
+  try {
+    const res = await fetch("http://localhost:5000/api/doctors", { headers: authHeaders() });
+    const data = await res.json();
+
+    if (res.ok && Array.isArray(data)) {
+      doctors = data;
+      const select = document.getElementById("doctorId");
+      select.innerHTML = '<option value="">Select doctor</option>' +
+        data.map(d => `<option value="${d.doctorId}">${escapeHtml(d.name)}</option>`).join('');
+    }
+  } catch (err) {
+    console.error("Error loading doctors:", err);
+  }
+}
+
+async function loadLeaves() {
+  if (!requireAdminLogin()) return;
+
+  const filterStatus = document.getElementById("filterStatus").value;
+  const filterType = document.getElementById("filterType").value;
+  const filterDoctor = document.getElementById("filterDoctor").value;
+
+  const params = new URLSearchParams();
+  if (filterStatus) params.set("status", filterStatus);
+  if (filterType) params.set("type", filterType);
+  if (filterDoctor) params.set("doctor", filterDoctor);
+
+  const container = document.getElementById("leavesContainer");
+  container.innerHTML = '<div style="text-align: center; padding: var(--spacing-8); grid-column: 1 / -1;"><i class="fas fa-spinner fa-spin"></i> Loading leaves...</div>';
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/leaves?${params}`, { headers: authHeaders() });
+
+    if (res.status === 401 || res.status === 403) {
+      container.innerHTML = '<div class="alert alert-danger" style="grid-column: 1 / -1;"><div class="alert-content"><p>Session expired. Please log in again.</p></div></div>';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      container.innerHTML = `<div class="alert alert-danger" style="grid-column: 1 / -1;"><div class="alert-content"><p>${data.message || 'Failed to load leaves'}</p></div></div>`;
+      return;
+    }
+
+    updateStats(data.stats || {});
+    renderLeaves(data.leaves || []);
+  } catch (err) {
+    console.error("Error loading leaves:", err);
+    container.innerHTML = '<div class="alert alert-danger" style="grid-column: 1 / -1;"><div class="alert-content"><p>Failed to load leaves. Please try again.</p></div></div>';
+  }
+}
+
+function updateStats(stats) {
+  document.getElementById("totalLeaves").textContent = stats.total || 0;
+  document.getElementById("pendingLeaves").textContent = stats.pending || 0;
+  document.getElementById("approvedLeaves").textContent = stats.approved || 0;
+  document.getElementById("rejectedLeaves").textContent = stats.rejected || 0;
+}
+
+function renderLeaves(leaves) {
+  const container = document.getElementById("leavesContainer");
+
+  if (leaves.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <i class="fas fa-calendar-times"></i>
+        <h3>No leaves found</h3>
+        <p>${document.getElementById("filterStatus").value || document.getElementById("filterType").value ? "Try adjusting your filters" : "Leave requests will appear here"}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const leavesHtml = leaves.map(leave => `
+    <div class="leave-card">
+      <div class="leave-header">
+        <div class="leave-avatar">
+          ${leave.doctorName.split(' ').map(n => n[0]).join('').toUpperCase()}
+        </div>
+        <div class="leave-info">
+          <h3>${escapeHtml(leave.doctorName)}</h3>
+          <p><i class="fas fa-leaf"></i> ${escapeHtml(leave.leaveType)}</p>
+        </div>
+      </div>
+
+      <div class="leave-details">
+        <div class="leave-detail-row">
+          <span class="leave-detail-label">From Date</span>
+          <span class="leave-detail-value">${leave.fromDate}</span>
+        </div>
+        <div class="leave-detail-row">
+          <span class="leave-detail-label">To Date</span>
+          <span class="leave-detail-value">${leave.toDate}</span>
+        </div>
+        <div class="leave-detail-row">
+          <span class="leave-detail-label">Days</span>
+          <span class="leave-detail-value">${leave.numberOfDays}</span>
+        </div>
+        <div class="leave-detail-row">
+          <span class="leave-detail-label">Status</span>
+          <span class="leave-status status-${leave.status.toLowerCase()}">
+            <i class="fas fa-circle"></i> ${leave.status}
+          </span>
+        </div>
+        ${leave.reason ? `
+          <div class="leave-detail-row">
+            <span class="leave-detail-label">Reason</span>
+            <span class="leave-detail-value">${escapeHtml(leave.reason)}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      ${leave.status === 'Pending' ? `
+        <div class="leave-actions">
+          <button class="btn btn-success btn-sm btn-full" onclick="openApproveModal(${leave.leaveId}, '${escapeHtml(leave.doctorName)}', '${leave.fromDate}', '${leave.toDate}')">
+            <i class="fas fa-check"></i> Approve
+          </button>
+          <button class="btn btn-danger btn-sm btn-full" onclick="openRejectModal(${leave.leaveId}, '${escapeHtml(leave.doctorName)}')">
+            <i class="fas fa-times"></i> Reject
+          </button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+
+  container.innerHTML = leavesHtml;
+}
+
+async function submitLeave() {
+  const doctorId = document.getElementById("doctorId").value;
+  const leaveType = document.getElementById("leaveType").value;
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+  const reason = document.getElementById("reason").value;
+  const errEl = document.getElementById("formError");
+
+  if (!doctorId || !leaveType || !startDate || !endDate) {
+    errEl.textContent = "Please fill in all required fields";
+    errEl.style.display = "block";
+    return;
+  }
+
+  if (new Date(startDate) > new Date(endDate)) {
+    errEl.textContent = "End date must be after start date";
+    errEl.style.display = "block";
+    return;
+  }
+
+  if (!requireAdminLogin()) return;
+
+  try {
+    const res = await fetch("http://localhost:5000/api/leaves", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ doctorId, leaveType, fromDate: startDate, toDate: endDate, reason })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.message || "Failed to submit leave request";
+      errEl.style.display = "block";
+      return;
+    }
+
+    showMessage("Leave request submitted successfully!", "success");
+
+    // Reset form
+    document.getElementById("doctorId").value = "";
+    document.getElementById("leaveType").value = "";
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
+    document.getElementById("reason").value = "";
+    errEl.style.display = "none";
+
+    loadLeaves();
+  } catch (err) {
+    console.error("Error:", err);
+    errEl.textContent = "Network error. Please try again.";
+    errEl.style.display = "block";
+  }
+}
+
+function openApproveModal(leaveId, doctorName, fromDate, toDate) {
+  approveLeaveId = leaveId;
+  document.getElementById("approveDoctorName").textContent = doctorName;
+  document.getElementById("approveFromDate").textContent = fromDate;
+  document.getElementById("approveToDate").textContent = toDate;
+  document.getElementById("approveError").style.display = "none";
+  document.getElementById("approveModal").classList.add("active");
+}
+
+function closeApproveModal() {
+  document.getElementById("approveModal").classList.remove("active");
+  approveLeaveId = null;
+}
+
+async function confirmApprove() {
+  if (!approveLeaveId) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/leaves/${approveLeaveId}/approve`, {
+      method: "POST",
+      headers: authHeaders()
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      document.getElementById("approveError").textContent = data.message || "Failed to approve leave";
+      document.getElementById("approveError").style.display = "block";
+      return;
+    }
+
+    showMessage("Leave approved successfully!", "success");
+    closeApproveModal();
+    loadLeaves();
+  } catch (err) {
+    console.error("Error:", err);
+    document.getElementById("approveError").textContent = "Network error. Please try again.";
+    document.getElementById("approveError").style.display = "block";
+  }
+}
+
+function openRejectModal(leaveId, doctorName) {
+  rejectLeaveId = leaveId;
+  document.getElementById("rejectDoctorName").textContent = doctorName;
+  document.getElementById("rejectReason").value = "";
+  document.getElementById("rejectError").style.display = "none";
+  document.getElementById("rejectModal").classList.add("active");
+}
+
+function closeRejectModal() {
+  document.getElementById("rejectModal").classList.remove("active");
+  rejectLeaveId = null;
+}
+
+async function confirmReject() {
+  if (!rejectLeaveId) return;
+
+  const reason = document.getElementById("rejectReason").value;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/leaves/${rejectLeaveId}/reject`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ reason })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      document.getElementById("rejectError").textContent = data.message || "Failed to reject leave";
+      document.getElementById("rejectError").style.display = "block";
+      return;
+    }
+
+    showMessage("Leave rejected successfully!", "success");
+    closeRejectModal();
+    loadLeaves();
+  } catch (err) {
+    console.error("Error:", err);
+    document.getElementById("rejectError").textContent = "Network error. Please try again.";
+    document.getElementById("rejectError").style.display = "block";
+  }
+}
+
+function clearFilters() {
+  document.getElementById("filterDoctor").value = "";
+  document.getElementById("filterStatus").value = "";
+  document.getElementById("filterType").value = "";
+  loadLeaves();
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showMessage(message, type) {
+  const alertHtml = `
+    <div class="alert alert-${type}" style="position: fixed; top: 80px; right: 20px; max-width: 400px; z-index: 1000; box-shadow: var(--shadow-lg);">
+      <div class="alert-content">
+        <p style="margin: 0;"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${message}</p>
+      </div>
+    </div>
+  `;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = alertHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  setTimeout(() => tempDiv.firstElementChild?.remove(), 4000);
+}
+
+// Load data on page load
+loadDoctors();
+loadLeaves();
+</script>
+</body>
+</html>
