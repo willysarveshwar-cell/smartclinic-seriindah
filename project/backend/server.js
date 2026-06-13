@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
+const path = require("path");
 require("dotenv").config();
 
 const db = require("./db");
@@ -22,8 +23,11 @@ app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/chat", require("./routes/chat"));
 app.use("/api/leaves", require("./routes/leaves"));
 
-// Health check
-app.get("/", (req, res) => {
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+// Health check (API only)
+app.get("/api", (req, res) => {
   res.send("Smart Clinic Backend is running");
 });
 
